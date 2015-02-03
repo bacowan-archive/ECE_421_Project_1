@@ -1,0 +1,3 @@
+class AbstractDataStructure
+
+end
