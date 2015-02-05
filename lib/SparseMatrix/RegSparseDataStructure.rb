@@ -90,7 +90,13 @@ class RegSparseDataStructure < AbstractDataStructure
     if index.kind_of?(Array)
       index = index[0]
     end
-    return index.inject(@map, :[])
+
+    # return what's at the index. If nothing's there, return 0 (the default value)
+    begin
+      return index.inject(@map, :[])
+    rescue NoMethodError
+      return 0
+    end
   end
 
   def rowCount
@@ -101,6 +107,26 @@ class RegSparseDataStructure < AbstractDataStructure
 
   # transpose the matrix
   def transpose
+
+    # we are just going to overwrite the hash
+    newHash = Hash.new()
+
+    # transpose the vals from the old hash to the new one
+    self.each_with_index { |index,val|
+      first = index[0]
+      last = index[1]
+      # add the second level of the hash if necessary
+      unless newHash.has_key? last
+        newHash[last] = Hash.new(0)
+      end
+      newHash[last][first] = val
+    }
+    @map = newHash
+
+    # the shape has changed
+    oldRows = @rows
+    @rows = @columns
+    @columns = oldRows
 
   end
 

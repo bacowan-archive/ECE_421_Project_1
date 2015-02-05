@@ -34,19 +34,22 @@ class SparseMatrix
 
   end
 
-  # return the transpose of this matrix
-  def transpose
-    #newDelegate = @delegate.clone
-    #newMatrix = SparseMatrix.create(self.row_size,self.column_size)
-    #return
-  end
-
   # Constructor. Takes a delegate internal structure for
   # assigning its methods to
   # +delegate+:: AbstractDataStructure to assign delegation to
   def initialize(delegate)
     raise "Not a proper delegate" unless delegate.is_a? AbstractDataStructure
     @delegate = delegate
+  end
+
+  # return the transpose of this matrix
+  def transpose
+    newDelegate = @delegate.clone
+
+    newDelegate.transpose
+
+    newMatrix = SparseMatrix.new(newDelegate)
+    return newMatrix
   end
 
   # override the clone operation for a deep clone

@@ -56,16 +56,38 @@ class TestSimpleNumber < Test::Unit::TestCase
     assert(_inbounds(index,@sparseMatrix))
     assert(val.is_a? Numeric)
     assert_not_equal(@sparseMatrix[index],0)
-    _invariants(@sparseMatrix,@originalMatrix)
+    #_invariants(@sparseMatrix,@originalMatrix)
 
     # run the command
     @sparseMatrix.put(index,val)
 
     # post-conditions and invariants
-    _invariants(@sparseMatrix,@originalMatrix)
+    #_invariants(@sparseMatrix,@originalMatrix)
     assert_equal( @sparseMatrix[index], val )
     assert(@sparseMatrix.include?(val))
     assert_equal(@sparseMatrix.internalRepItemCount,@oldSparseMatrix.internalRepItemCount)
+
+  end
+
+  # transpose the matrix
+  def test_transpose
+
+    # pre-conditions and invariants
+    #_invariants(@sparsematrix,@originalMatrix)
+
+    # do the operation
+    transposedMatrix = @sparseMatrix.transpose
+
+    #post-conditions and invariants
+    #_invariants(@sparsematrix,@originalMatrix)
+    assert_equal(@sparseMatrix.row_size,transposedMatrix.column_size)
+    assert_equal(@sparseMatrix.column_size,transposedMatrix.row_size)
+
+    (0..@sparseMatrix.row_size).each { |i|
+      (0..@sparseMatrix.column_size).each { |j|
+        assert_equal(@sparseMatrix[i,j],transposedMatrix[j,i])
+      }
+    }
 
   end
 
