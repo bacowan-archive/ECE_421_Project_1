@@ -62,6 +62,18 @@ class RegSparseDataStructure < AbstractDataStructure
 
   end
 
+  def clone
+    newData = RegSparseDataStructure.new(@rows,@columns)
+    self.each_with_index { |index,val|
+      newData[index] = val
+    }
+    return newData
+  end
+
+  def []=(key,val)
+    self.put(key,val)
+  end
+
   # iterate through all the elements in the array
   def each_with_index(&block)
     _map_iterate(@map,[],&block)
@@ -87,7 +99,7 @@ class RegSparseDataStructure < AbstractDataStructure
   end
 
   def [](*index)
-    if index.kind_of?(Array)
+    if index[0].kind_of?(Array)
       index = index[0]
     end
 
@@ -95,7 +107,10 @@ class RegSparseDataStructure < AbstractDataStructure
     begin
       return index.inject(@map, :[])
     rescue NoMethodError
-      return 0
+      print index
+      puts ''
+      raise 'fuck'
+      #return 0
     end
   end
 
@@ -128,6 +143,30 @@ class RegSparseDataStructure < AbstractDataStructure
     @rows = @columns
     @columns = oldRows
 
+  end
+
+  # add the value from another array to this one, and return the result
+  def +(other)
+    if other.is_a? RegSparseDataStructure
+      return _addToReg(other)
+    end
+    raise "object to be added is of incompatible type"
+  end
+
+  def _addToReg(other)
+    otherDup = other.clone
+    self.each_with_index {|index,val|
+      otherDup[index] = otherDup[index] + val
+    }
+    return otherDup
+  end
+
+  # return the ruby Matrix representation of the array
+  def toBaseMatrix
+    mat = Matrix.build(@rows,@columns) { |i,j| self[i,j] }
+    print mat
+    puts ''
+    return mat
   end
 
 end

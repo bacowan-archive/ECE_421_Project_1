@@ -69,6 +69,40 @@ class TestSimpleNumber < Test::Unit::TestCase
 
   end
 
+  # modify zero values in matrix by supplying an index
+  # and a new value
+  def test_put_in_zero
+
+    # test values
+    zeroIndices = []
+    (0..MAT_ROWS).each { |i|
+      (0..MAT_COLS).each { |j|
+        if @sparseMatrix[i,j] == 0
+          zeroIndices.push([i,j])
+        end
+      }
+    }
+
+    index = zeroIndices[@prng.rand(zeroIndices.size)]
+    val = @prng.rand(MAX_VAL)
+
+    # pre-conditions and invariants
+    assert(_inbounds(index,@sparseMatrix))
+    assert(val.is_a? Numeric)
+    assert_equal(@sparseMatrix[index],0)
+    #_invariants(@sparseMatrix,@originalMatrix)
+
+    # run the command
+    @sparseMatrix.put(index,val)
+
+    # post-conditions and invariants
+    #_invariants(@sparseMatrix,@originalMatrix)
+    assert_equal( @sparseMatrix[index], val )
+    assert(@sparseMatrix.include?(val))
+    assert_equal(@sparseMatrix.internalRepItemCount,@oldSparseMatrix.internalRepItemCount+1)
+
+  end
+
   # transpose the matrix
   def test_transpose
 
@@ -83,11 +117,43 @@ class TestSimpleNumber < Test::Unit::TestCase
     assert_equal(@sparseMatrix.row_size,transposedMatrix.column_size)
     assert_equal(@sparseMatrix.column_size,transposedMatrix.row_size)
 
-    (0..@sparseMatrix.row_size).each { |i|
-      (0..@sparseMatrix.column_size).each { |j|
+    (0..@sparseMatrix.row_size-1).each { |i|
+      (0..@sparseMatrix.column_size-1).each { |j|
         assert_equal(@sparseMatrix[i,j],transposedMatrix[j,i])
       }
     }
+
+  end
+
+  # add two matrices together
+  def test_add
+
+    # matrix to add
+    baseMatrix = Matrix.build(MAT_ROWS,MAT_COLS) { |row,col|
+      if @prng.rand(100) < SPARSITY
+        @prng.rand(MAX_VAL)
+      else
+        0
+      end
+    }
+    addMatrix = SparseMatrix.create(baseMatrix)
+
+    # pre-conditions and invariants
+    assert(addMatrix.is_a? SparseMatrix)
+    assert_equal(addMatrix.row_size,@sparseMatrix.row_size)
+    assert_equal(addMatrix.column_size,@sparseMatrix.column_size)
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+
+    # do the operation
+    result = @sparseMatrix + addMatrix
+
+    # post-conditions and invariants
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,@sparseMatrix.column_size)
+    assert_equal(result.toBaseMatrix,baseMatrix+@originalMatrix)
+
+
 
   end
 

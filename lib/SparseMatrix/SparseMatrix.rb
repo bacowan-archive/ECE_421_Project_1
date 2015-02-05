@@ -54,7 +54,8 @@ class SparseMatrix
 
   # override the clone operation for a deep clone
   def clone
-    return SparseMatrix.new(@delegate)
+    newDelegate = @delegate.clone
+    return SparseMatrix.new(newDelegate)
   end
 
   # Insert a value into the matrix
@@ -122,6 +123,24 @@ class SparseMatrix
       str << val
     }
     return str.to_s
+  end
+
+  # add this matrix to another
+  def +(other)
+    raise "not a sparse matrix object" unless other.is_a? SparseMatrix
+    newDelegate = @delegate + other.getDelegate
+    newMatrix = SparseMatrix.new(newDelegate)
+    return newMatrix
+  end
+
+  # return the delegate of this matrix
+  def getDelegate
+    return @delegate
+  end
+
+  # return the ruby Matrix representation of the array
+  def toBaseMatrix
+    return @delegate.toBaseMatrix
   end
 
 end
