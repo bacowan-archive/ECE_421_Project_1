@@ -48,12 +48,11 @@ class RegSparseDataStructure < AbstractDataStructure
   def put(index,val)
     # duplicate index so that it doesn't change
     dupIndex = index.clone
-
     dims = dupIndex.size
 
     # TODO: current implementation is only for 2d arrays
-    raise "index has the wrong number of values" unless dims == 2
-    raise "index is out of bounds" unless dupIndex[0] >= 0 and dupIndex[0] < @rows and dupIndex[1] >= 0 and dupIndex[1] < @columns
+    raise "index has the wrong number of values (#{dims} instead of 2)" unless dims == 2
+    raise "index #{dupIndex} is out of bounds" unless dupIndex[0] >= 0 and dupIndex[0] < @rows and dupIndex[1] >= 0 and dupIndex[1] < @columns
 
     # note: from http://stackoverflow.com/questions/14294751/how-to-set-nested-hash-in-ruby-dynamically
     # TODO: make the getter functions in a similar fashion
@@ -70,8 +69,13 @@ class RegSparseDataStructure < AbstractDataStructure
     return newData
   end
 
-  def []=(key,val)
-    self.put(key,val)
+  def []=(*opts)
+    if opts.size == 2
+      self.put(opts[0],opts[1])
+    else
+      self.put(opts[0..-2],opts[-1])
+    end
+
   end
 
   # iterate through all the elements in the array
@@ -149,8 +153,19 @@ class RegSparseDataStructure < AbstractDataStructure
   def +(other)
     if other.is_a? RegSparseDataStructure
       return _addToReg(other)
+    elsif other.is_a? Numeric
+      return _addToScalar(other)
     end
     raise "object to be added is of incompatible type"
+  end
+
+  # remove the value from another array from this one, and return the result
+  def -(other)
+    if other.is_a? RegSparseDataStructure
+      return _subFromReg(other)
+    elsif other.is_a? Numeric
+      return _subFromScalar(other)
+    end
   end
 
   def _addToReg(other)
@@ -161,11 +176,37 @@ class RegSparseDataStructure < AbstractDataStructure
     return otherDup
   end
 
+  def _addToScalar(other)
+    selfDup = self.clone
+    (0..@rows-1).each { |i|
+      (0..@columns-1).each { |j|
+        selfDup[i,j] = selfDup[i,j] + other
+      }
+    }
+    return selfDup
+  end
+
+  def _subFromReg(other)
+    otherDup = self.clone
+    other.each_with_index { |index,val|
+      otherDup[index] = otherDup[index] - val
+    }
+    return otherDup
+  end
+
+  def _subFromScalar(other)
+    selfDup = self.clone
+    (0..@rows-1).each { |i|
+      (0..@columns-1).each { |j|
+        selfDup[i,j] = selfDup - other
+      }
+    }
+    return selfDup
+  end
+
   # return the ruby Matrix representation of the array
   def toBaseMatrix
     mat = Matrix.build(@rows,@columns) { |i,j| self[i,j] }
-    print mat
-    puts ''
     return mat
   end
 

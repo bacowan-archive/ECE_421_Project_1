@@ -153,6 +153,57 @@ class TestSimpleNumber < Test::Unit::TestCase
     assert_equal(result.column_size,@sparseMatrix.column_size)
     assert_equal(result.toBaseMatrix,baseMatrix+@originalMatrix)
 
+  end
+
+
+  # subtract one matrix from another
+  def test_subtract
+
+    # matrix to subtract
+    baseMatrix = Matrix.build(MAT_ROWS,MAT_COLS) { |row,col|
+      if @prng.rand(100) < SPARSITY
+        @prng.rand(MAX_VAL)
+      else
+        0
+      end
+    }
+    subMatrix = SparseMatrix.create(baseMatrix)
+
+    # pre-conditions and invariants
+    assert(subMatrix.is_a? SparseMatrix)
+    assert_equal(subMatrix.row_size,@sparseMatrix.row_size)
+    assert_equal(subMatrix.column_size,@sparseMatrix.column_size)
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+
+    # do the operation
+    result = @sparseMatrix - subMatrix
+
+    # post-conditions and invariants
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,@sparseMatrix.column_size)
+    assert_equal(result.toBaseMatrix,@originalMatrix-baseMatrix)
+
+  end
+
+  # add a scalar value to the matrix
+  def test_add_scalar
+    # value to add
+    val = 5
+
+    # pre-condition and invariants
+    assert(val.is_a? Numeric)
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+
+    # do the operation
+    result = @sparseMatrix + val
+
+    # post-conditions and invariants
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,@sparseMatrix.column_size)
+    assert_equal(result.toBaseMatrix,Matrix.build(@originalMatrix.row_size,@originalMatrix.column_size){|x,y| @originalMatrix[x,y]+val})
+    assert_equal(@sparseMatrix,@oldSparseMatrix)
 
 
   end
