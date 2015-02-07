@@ -59,7 +59,7 @@ class SparseMatrix
     assert_equal(self.column_size,newMatrix.row_size,"post-condition")
     (0..self.row_size-1).each { |i|
       (0..self.column_size-1).each { |j|
-        assert_equal(self[i,j],result[j,i],"post-condition")
+        assert_equal(self[i,j],newMatrix[j,i],"post-condition")
       }
     }
 
@@ -190,7 +190,9 @@ class SparseMatrix
       assert_equal(newMatrix.column_size,self.column_size,"post-condition")
       assert_equal(newMatrix.toBaseMatrix,other.toBaseMatrix+self.toBaseMatrix,"post-condition")
     elsif other.is_a? Numeric
-      assert_equal(newMatrix.toBaseMatrix,Matrix.build(self.row_size,self.column_size){|x,y| self[x,y]+val},"post-condition")
+      assert_equal(newMatrix.row_size,self.row_size,"post-condition")
+      assert_equal(newMatrix.column_size,self.column_size,"post-condition")
+      assert_equal(newMatrix.toBaseMatrix,Matrix.build(self.row_size,self.column_size){|x,y| self[x,y]+other},"post-condition")
     end
 
     return newMatrix
@@ -204,12 +206,16 @@ class SparseMatrix
     if other.respond_to? :getDelegate
       assert_equal(self.row_size,other.row_size,"pre-condition")
       assert_equal(self.column_size,other.column_size,"pre-condition")
+    elsif other.is_a? Numeric
+      # no pre-conditions
+    else
+      assert(false,"pre-condition")
     end
 
     if other.respond_to? :getDelegate
       newDelegate = @delegate - other.getDelegate
     elsif other.is_a? Numeric
-      newDelegate = @delegeate - other
+      newDelegate = @delegate - other
     else
       raise "not a sparse matrix object or scalar"
     end
@@ -221,9 +227,74 @@ class SparseMatrix
       assert_equal(newMatrix.row_size,self.row_size,"post-condition")
       assert_equal(newMatrix.column_size,self.column_size,"post-condition")
       assert_equal(newMatrix.toBaseMatrix,self.toBaseMatrix-other.toBaseMatrix,"post-condition")
+    elsif other.is_a? Numeric
+      assert_equal(newMatrix.row_size,self.row_size,"post-condition")
+      assert_equal(newMatrix.column_size,self.column_size,"post-condition")
+      assert_equal(newMatrix.toBaseMatrix,Matrix.build(self.row_size,self.column_size){|x,y| self[x,y]-other},"post-condition")
     end
 
     return newMatrix
+  end
+
+  # matrix multiplication on another matrix or a scalar
+  def *(other)
+    # invariants and pre-conditions
+    _invariants
+    if other.respond_to? :getDelegate
+      assert_equal(other.row_size,self.column_size,"pre-condition")
+    elsif other.is_a? Numeric
+      # no preconditions
+    else
+      raise "not a sparse matrix object or scalar"
+    end
+
+    if other.respond_to? :getDelegate
+      result = SparseMatrix.create(self.row_size,other.column_size)
+      self.each_with_index {|index,val|
+        (0..other.column_size-1).each {|i|
+          result.put([index[0],i], result[index[0],i] + val*other[index[1],i])
+        }
+      }
+    elsif other.is_a? Numeric
+      newDelegate = @delegate * other
+      result = SparseMatrix.new(newDelegate)
+    end
+
+
+    # post-conditions and invariants
+    _invariants
+    if other.respond_to? :getDelegate
+      assert_equal(result.row_size,self.row_size,"post-condition")
+      assert_equal(result.column_size,other.column_size,"post-condition")
+      assert_equal(result.toBaseMatrix,self.toBaseMatrix*other.toBaseMatrix,"post-condition")
+    elsif other.is_a? Numeric
+      assert_equal(result.row_size,self.row_size,"post-condition")
+      assert_equal(result.column_size,self.column_size,"post-condition")
+      assert_equal(result.toBaseMatrix,self.toBaseMatrix*other,"post-conditions")
+    end
+
+    return result
+
+  end
+
+  # do the elementwise multiplication of the matrix to another
+  def elementMult(other)
+    # pre-conditions and invariants
+    assert((other.respond_to? :[]), "pre-condition")
+    _invariants
+    assert_equal(self.row_size,other.row_size, "pre-condition")
+    assert_equal(self.column_size,other.row_size, "pre-condition")
+
+    result = self.clone
+    self.each_with_index {|index,val|
+      result.put(index, val * other[index] )
+    }
+
+    # post-conditions and invariants
+    _invariants
+    assert_equal(result.toBaseMatrix,Matrix.build(self.row_size,self.column_size) {|x,y| self[x,y] * other[x,y]}, "post-condition")
+
+    return result
   end
 
   # return the delegate of this matrix
@@ -247,16 +318,25 @@ class SparseMatrix
 
   # assert that the condition is true. If not, throw an error
   def assert(condition,conditionType)
-    raise "#{conditionType} not met" unless condition
+    raise "#{conditionType} not met. " unless condition
   end
 
   # assert that two values are equal
   def assert_equal(val1,val2,conditionType)
-    assert(val1==val2,conditionType)
+    begin
+      assert(val1==val2,conditionType)
+    rescue Exception => e
+      raise e.message + "Expected \n#{val1}, got\n#{val2}"
+    end
+
   end
 
   def assert_not_equal(val1,val2,conditionType)
-    assert(val1!=val2,conditionType)
+    begin
+      assert(val1!=val2,conditionType)
+    rescue Exception => e
+      raise e.message + "Expected anything but\n#{val1}, got\n#{val2}"
+    end
   end
 
   # check if the given index is in the matrix bounds

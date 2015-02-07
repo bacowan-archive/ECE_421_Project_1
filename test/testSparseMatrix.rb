@@ -3,7 +3,7 @@ require_relative "../lib/SparseMatrix/NotInvertibleError"
 require "test/unit"
 require "matrix"
 
-class TestSimpleNumber < Test::Unit::TestCase
+class TestSparseMatrix < Test::Unit::TestCase
 
   # size of our matrix
   MAT_ROWS = 100
@@ -206,6 +206,82 @@ class TestSimpleNumber < Test::Unit::TestCase
     assert_equal(@sparseMatrix,@oldSparseMatrix)
 
 
+  end
+
+  # subtract a scalar value from the matrix
+  def test_sub_scalar
+    # value to subtract
+    val = 5
+
+    # pre-condition and invariants
+    assert(val.is_a? Numeric)
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+
+    # do the operation
+    result = @sparseMatrix - val
+
+    # post-conditions and invariants
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,@sparseMatrix.column_size)
+    assert_equal(result.toBaseMatrix,Matrix.build(@originalMatrix.row_size,@originalMatrix.column_size){|x,y| @originalMatrix[x,y]-val})
+    assert_equal(@sparseMatrix,@oldSparseMatrix)
+
+
+  end
+
+  # test matrix multiplication
+  def test_mult
+    # matrix to multiply
+    newMatRows = @sparseMatrix.column_size
+    newMatCols = 10
+    baseMatrix = Matrix.build(newMatRows,newMatCols) { |row,col|
+      if @prng.rand(100) < SPARSITY * 2
+        @prng.rand(MAX_VAL)
+      else
+        0
+      end
+    }
+    multMatrix = SparseMatrix.create(baseMatrix)
+
+    result = @sparseMatrix * multMatrix
+
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,multMatrix.column_size)
+    assert_equal(result.toBaseMatrix,@originalMatrix*baseMatrix)
+
+  end
+
+  # test scalar multiplication
+  def test_scalar_mult
+    # value to multiply
+    val = 5
+
+    result = @sparseMatrix * val
+
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,@sparseMatrix.column_size)
+    assert_equal(result.toBaseMatrix,@originalMatrix*val)
+
+  end
+
+  # test elementwise multiplication
+  def test_element_mult
+    # matrix to multiply
+    baseMatrix = Matrix.build(@sparseMatrix.row_size,@sparseMatrix.column_size) { |row,col|
+      if @prng.rand(100) < SPARSITY * 2
+        @prng.rand(MAX_VAL)
+      else
+        0
+      end
+    }
+    multMatrix = SparseMatrix.create(baseMatrix)
+
+    result = @sparseMatrix.elementMult(multMatrix)
+
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,@sparseMatrix.column_size)
+    assert_equal(result.toBaseMatrix,Matrix.build(@sparseMatrix.row_size,@sparseMatrix.column_size) {|x,y| @sparseMatrix[x,y]*baseMatrix[x,y]})
   end
 
   # check if the given index is in the matrix bounds

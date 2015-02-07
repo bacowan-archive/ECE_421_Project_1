@@ -57,7 +57,16 @@ class RegSparseDataStructure < AbstractDataStructure
     # note: from http://stackoverflow.com/questions/14294751/how-to-set-nested-hash-in-ruby-dynamically
     # TODO: make the getter functions in a similar fashion
     last = dupIndex.pop
-    dupIndex.inject(@map, :fetch)[last] = val
+    if val == 0
+      begin
+        dupIndex.inject(@map, :fetch).delete(last)
+      rescue NoMethodError
+        # the key is already zero
+      end
+    else
+      dupIndex.inject(@map, :fetch)[last] = val
+    end
+    #dupIndex.inject(@map, :fetch)[last] = val unless val == 0 and self[index] == 0 # don't add new rows for zeros
 
   end
 
@@ -75,7 +84,6 @@ class RegSparseDataStructure < AbstractDataStructure
     else
       self.put(opts[0..-2],opts[-1])
     end
-
   end
 
   # iterate through all the elements in the array
@@ -111,10 +119,7 @@ class RegSparseDataStructure < AbstractDataStructure
     begin
       return index.inject(@map, :[])
     rescue NoMethodError
-      print index
-      puts ''
-      raise 'fuck'
-      #return 0
+      return 0
     end
   end
 
@@ -168,6 +173,15 @@ class RegSparseDataStructure < AbstractDataStructure
     end
   end
 
+  # multiply a scalar by this matrix
+  def *(other)
+    selfDup = self.clone
+    self.each_with_index { |index,val|
+      selfDup[index] = val*other
+    }
+    return selfDup
+  end
+
   def _addToReg(other)
     otherDup = other.clone
     self.each_with_index {|index,val|
@@ -198,7 +212,7 @@ class RegSparseDataStructure < AbstractDataStructure
     selfDup = self.clone
     (0..@rows-1).each { |i|
       (0..@columns-1).each { |j|
-        selfDup[i,j] = selfDup - other
+        selfDup[i,j] = selfDup[i,j] - other
       }
     }
     return selfDup
