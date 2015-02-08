@@ -297,6 +297,46 @@ class SparseMatrix
     return result
   end
 
+  def flipHorizontal
+    # pre-conditions and invariants
+    _invariants
+
+    newDelegate = self.getDelegate.clone
+    newDelegate.flipHorizontal
+    result = SparseMatrix.new(newDelegate)
+
+    # post-conditions and invariants
+    _invariants
+    assert_equal(result.internalRepItemCount,self.internalRepItemCount,"post-condition")
+    result.each_with_index { |index,val|
+      row = index[0]
+      col = index[1]
+      assert_equal(val,self[row,self.column_size-1-col],"post-condition")
+    }
+
+    return result
+  end
+
+  def flipVertical
+    # pre-conditions and invariants
+    _invariants
+
+    newDelegate = self.getDelegate.clone
+    newDelegate.flipVertical
+    result = SparseMatrix.new(newDelegate)
+
+    # post-conditions and invariants
+    _invariants
+    assert_equal(result.internalRepItemCount,self.internalRepItemCount,"post-condition")
+    result.each_with_index { |index,val|
+      row = index[0]
+      col = index[1]
+      assert_equal(val,self[self.row_size-1-row,col],"post-condition")
+    }
+
+    return result
+  end
+
   # return the delegate of this matrix
   def getDelegate
     return @delegate

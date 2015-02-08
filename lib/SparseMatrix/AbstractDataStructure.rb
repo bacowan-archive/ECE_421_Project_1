@@ -39,4 +39,16 @@ class AbstractDataStructure
   def toBaseMatrix
     raise NotImplementedError
   end
+
+  def flipHorizontal
+    raise NotImplementedError
+  end
+
+  def flipVertical
+    raise NotImplementedError
+  end
+
+  def flipHorizontal
+    raise NotImplementedError
+  end
 end

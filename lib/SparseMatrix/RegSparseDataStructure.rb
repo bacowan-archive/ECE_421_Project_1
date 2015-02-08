@@ -15,7 +15,7 @@ class RegSparseDataStructure < AbstractDataStructure
       if args.size == 2
         @rows = args[0]
         @columns = args[1]
-        (0..@rows).each {|i| @map[i] = Hash.new(0) }
+        @map = _createMap(@rows)
       else
         raise "matrices of dimensions other than 2 are not currently supported"
       end
@@ -27,6 +27,12 @@ class RegSparseDataStructure < AbstractDataStructure
 
   end
 
+  def _createMap(rows)
+    map = Hash.new()
+    (0..rows-1).each {|i| map[i] = Hash.new(0) }
+    return map
+  end
+
   # Copy the input matrix into this matrix
   def _copyMatrix(matrix)
 
@@ -34,7 +40,7 @@ class RegSparseDataStructure < AbstractDataStructure
     @columns = matrix.column_size
 
     # create an entry for each row, and default the values to 0
-    (0..@rows).each {|i| @map[i] = Hash.new(0) }
+    @map = _createMap(@rows)
 
     # enter non zero values
     matrix.each_with_index { |val, row, col|
@@ -55,19 +61,24 @@ class RegSparseDataStructure < AbstractDataStructure
     raise "index #{dupIndex} is out of bounds" unless dupIndex[0] >= 0 and dupIndex[0] < @rows and dupIndex[1] >= 0 and dupIndex[1] < @columns
 
     # note: from http://stackoverflow.com/questions/14294751/how-to-set-nested-hash-in-ruby-dynamically
-    # TODO: make the getter functions in a similar fashion
+    _putIntoMap(@map,index,val)
+
+    #dupIndex.inject(@map, :fetch)[last] = val unless val == 0 and self[index] == 0 # don't add new rows for zeros
+
+  end
+
+  def _putIntoMap(map,index,val)
+    dupIndex = index.clone
     last = dupIndex.pop
     if val == 0
       begin
-        dupIndex.inject(@map, :fetch).delete(last)
+        dupIndex.inject(map, :fetch).delete(last)
       rescue NoMethodError
         # the key is already zero
       end
     else
-      dupIndex.inject(@map, :fetch)[last] = val
+      dupIndex.inject(map, :fetch)[last] = val
     end
-    #dupIndex.inject(@map, :fetch)[last] = val unless val == 0 and self[index] == 0 # don't add new rows for zeros
-
   end
 
   def clone
@@ -180,6 +191,34 @@ class RegSparseDataStructure < AbstractDataStructure
       selfDup[index] = val*other
     }
     return selfDup
+  end
+
+  # flip this matrix horizontally
+  def flipHorizontal
+
+    newMap = _createMap(@rows)
+    self.each_with_index {|index,val|
+      row = index[0]
+      col = index[1]
+      _putIntoMap(newMap,[row,@columns-1-col],val)
+    }
+
+    @map = newMap
+
+  end
+
+  # flip this matrix horizontally
+  def flipVertical
+
+    newMap = _createMap(@rows)
+    self.each_with_index {|index,val|
+      row = index[0]
+      col = index[1]
+      _putIntoMap(newMap,[@rows-1-row,col],val)
+    }
+
+    @map = newMap
+
   end
 
   def _addToReg(other)

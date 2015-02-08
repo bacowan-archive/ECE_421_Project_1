@@ -252,6 +252,36 @@ class TestSparseMatrix < Test::Unit::TestCase
 
   end
 
+  # test the flip horizontal function
+  def test_flip_horizontal
+
+    result = @sparseMatrix.flipHorizontal
+    
+    assert_equal(result.internalRepItemCount,@sparseMatrix.internalRepItemCount)
+    
+    result.each_with_index { |index,val|
+      row = index[0]
+      col = index[1]
+      assert_equal(val,@sparseMatrix[row,@sparseMatrix.column_size-1-col])
+    }
+
+  end
+
+  # test the flip vertical function
+  def test_flip_vertical
+
+    result = @sparseMatrix.flipVertical
+
+    assert_equal(result.internalRepItemCount,@sparseMatrix.internalRepItemCount)
+
+    result.each_with_index { |index,val|
+      row = index[0]
+      col = index[1]
+      assert_equal(val,@sparseMatrix[@sparseMatrix.row_size-1-row,col])
+    }
+
+  end
+
   # test scalar multiplication
   def test_scalar_mult
     # value to multiply
