@@ -140,6 +140,14 @@ class SparseMatrix
     @delegate.getColSize
   end
 
+  # Create a submatrix of this, removing rows and cols
+  def subMatrix(rows,cols)
+    newDelegate = @delegate.clone
+    newDelegate.subMatrix(rows,cols)
+    newMatrix = SparseMatrix.new(newDelegate)
+    return newMatrix
+  end
+
   # test if a value exists in the matrix
   def include?(val)
     self.each {|item|
