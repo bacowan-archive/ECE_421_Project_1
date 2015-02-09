@@ -3,7 +3,7 @@ require_relative "../lib/SparseMatrix/NotInvertibleError"
 require "test/unit"
 require "matrix"
 
-class TestSimpleNumber < Test::Unit::TestCase
+class TestSparseMatrix < Test::Unit::TestCase
 
   # size of our matrix
   MAT_ROWS = 100
@@ -56,17 +56,262 @@ class TestSimpleNumber < Test::Unit::TestCase
     assert(_inbounds(index,@sparseMatrix))
     assert(val.is_a? Numeric)
     assert_not_equal(@sparseMatrix[index],0)
-    _invariants(@sparseMatrix,@originalMatrix)
+    #_invariants(@sparseMatrix,@originalMatrix)
 
     # run the command
     @sparseMatrix.put(index,val)
 
     # post-conditions and invariants
-    _invariants(@sparseMatrix,@originalMatrix)
+    #_invariants(@sparseMatrix,@originalMatrix)
     assert_equal( @sparseMatrix[index], val )
     assert(@sparseMatrix.include?(val))
     assert_equal(@sparseMatrix.internalRepItemCount,@oldSparseMatrix.internalRepItemCount)
 
+  end
+
+  # modify zero values in matrix by supplying an index
+  # and a new value
+  def test_put_in_zero
+
+    # test values
+    zeroIndices = []
+    (0..MAT_ROWS).each { |i|
+      (0..MAT_COLS).each { |j|
+        if @sparseMatrix[i,j] == 0
+          zeroIndices.push([i,j])
+        end
+      }
+    }
+
+    index = zeroIndices[@prng.rand(zeroIndices.size)]
+    val = @prng.rand(MAX_VAL)
+
+    # pre-conditions and invariants
+    assert(_inbounds(index,@sparseMatrix))
+    assert(val.is_a? Numeric)
+    assert_equal(@sparseMatrix[index],0)
+    #_invariants(@sparseMatrix,@originalMatrix)
+
+    # run the command
+    @sparseMatrix.put(index,val)
+
+    # post-conditions and invariants
+    #_invariants(@sparseMatrix,@originalMatrix)
+    assert_equal( @sparseMatrix[index], val )
+    assert(@sparseMatrix.include?(val))
+    assert_equal(@sparseMatrix.internalRepItemCount,@oldSparseMatrix.internalRepItemCount+1)
+
+  end
+
+  # transpose the matrix
+  def test_transpose
+
+    # pre-conditions and invariants
+    #_invariants(@sparsematrix,@originalMatrix)
+
+    # do the operation
+    transposedMatrix = @sparseMatrix.transpose
+
+    #post-conditions and invariants
+    #_invariants(@sparsematrix,@originalMatrix)
+    assert_equal(@sparseMatrix.row_size,transposedMatrix.column_size)
+    assert_equal(@sparseMatrix.column_size,transposedMatrix.row_size)
+
+    (0..@sparseMatrix.row_size-1).each { |i|
+      (0..@sparseMatrix.column_size-1).each { |j|
+        assert_equal(@sparseMatrix[i,j],transposedMatrix[j,i])
+      }
+    }
+
+  end
+
+  # add two matrices together
+  def test_add
+
+    # matrix to add
+    baseMatrix = Matrix.build(MAT_ROWS,MAT_COLS) { |row,col|
+      if @prng.rand(100) < SPARSITY
+        @prng.rand(MAX_VAL)
+      else
+        0
+      end
+    }
+    addMatrix = SparseMatrix.create(baseMatrix)
+
+    # pre-conditions and invariants
+    assert(addMatrix.is_a? SparseMatrix)
+    assert_equal(addMatrix.row_size,@sparseMatrix.row_size)
+    assert_equal(addMatrix.column_size,@sparseMatrix.column_size)
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+
+    # do the operation
+    result = @sparseMatrix + addMatrix
+
+    # post-conditions and invariants
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,@sparseMatrix.column_size)
+    assert_equal(result.toBaseMatrix,baseMatrix+@originalMatrix)
+
+  end
+
+
+  # subtract one matrix from another
+  def test_subtract
+
+    # matrix to subtract
+    baseMatrix = Matrix.build(MAT_ROWS,MAT_COLS) { |row,col|
+      if @prng.rand(100) < SPARSITY
+        @prng.rand(MAX_VAL)
+      else
+        0
+      end
+    }
+    subMatrix = SparseMatrix.create(baseMatrix)
+
+    # pre-conditions and invariants
+    assert(subMatrix.is_a? SparseMatrix)
+    assert_equal(subMatrix.row_size,@sparseMatrix.row_size)
+    assert_equal(subMatrix.column_size,@sparseMatrix.column_size)
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+
+    # do the operation
+    result = @sparseMatrix - subMatrix
+
+    # post-conditions and invariants
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,@sparseMatrix.column_size)
+    assert_equal(result.toBaseMatrix,@originalMatrix-baseMatrix)
+
+  end
+
+  # add a scalar value to the matrix
+  def test_add_scalar
+    # value to add
+    val = 5
+
+    # pre-condition and invariants
+    assert(val.is_a? Numeric)
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+
+    # do the operation
+    result = @sparseMatrix + val
+
+    # post-conditions and invariants
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,@sparseMatrix.column_size)
+    assert_equal(result.toBaseMatrix,Matrix.build(@originalMatrix.row_size,@originalMatrix.column_size){|x,y| @originalMatrix[x,y]+val})
+    assert_equal(@sparseMatrix,@oldSparseMatrix)
+
+
+  end
+
+  # subtract a scalar value from the matrix
+  def test_sub_scalar
+    # value to subtract
+    val = 5
+
+    # pre-condition and invariants
+    assert(val.is_a? Numeric)
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+
+    # do the operation
+    result = @sparseMatrix - val
+
+    # post-conditions and invariants
+    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,@sparseMatrix.column_size)
+    assert_equal(result.toBaseMatrix,Matrix.build(@originalMatrix.row_size,@originalMatrix.column_size){|x,y| @originalMatrix[x,y]-val})
+    assert_equal(@sparseMatrix,@oldSparseMatrix)
+
+
+  end
+
+  # test matrix multiplication
+  def test_mult
+    # matrix to multiply
+    newMatRows = @sparseMatrix.column_size
+    newMatCols = 10
+    baseMatrix = Matrix.build(newMatRows,newMatCols) { |row,col|
+      if @prng.rand(100) < SPARSITY * 2
+        @prng.rand(MAX_VAL)
+      else
+        0
+      end
+    }
+    multMatrix = SparseMatrix.create(baseMatrix)
+
+    result = @sparseMatrix * multMatrix
+
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,multMatrix.column_size)
+    assert_equal(result.toBaseMatrix,@originalMatrix*baseMatrix)
+
+  end
+
+  # test the flip horizontal function
+  def test_flip_horizontal
+
+    result = @sparseMatrix.flipHorizontal
+    
+    assert_equal(result.internalRepItemCount,@sparseMatrix.internalRepItemCount)
+    
+    result.each_with_index { |index,val|
+      row = index[0]
+      col = index[1]
+      assert_equal(val,@sparseMatrix[row,@sparseMatrix.column_size-1-col])
+    }
+
+  end
+
+  # test the flip vertical function
+  def test_flip_vertical
+
+    result = @sparseMatrix.flipVertical
+
+    assert_equal(result.internalRepItemCount,@sparseMatrix.internalRepItemCount)
+
+    result.each_with_index { |index,val|
+      row = index[0]
+      col = index[1]
+      assert_equal(val,@sparseMatrix[@sparseMatrix.row_size-1-row,col])
+    }
+
+  end
+
+  # test scalar multiplication
+  def test_scalar_mult
+    # value to multiply
+    val = 5
+
+    result = @sparseMatrix * val
+
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,@sparseMatrix.column_size)
+    assert_equal(result.toBaseMatrix,@originalMatrix*val)
+
+  end
+
+  # test elementwise multiplication
+  def test_element_mult
+    # matrix to multiply
+    baseMatrix = Matrix.build(@sparseMatrix.row_size,@sparseMatrix.column_size) { |row,col|
+      if @prng.rand(100) < SPARSITY * 2
+        @prng.rand(MAX_VAL)
+      else
+        0
+      end
+    }
+    multMatrix = SparseMatrix.create(baseMatrix)
+
+    result = @sparseMatrix.elementMult(multMatrix)
+
+    assert_equal(result.row_size,@sparseMatrix.row_size)
+    assert_equal(result.column_size,@sparseMatrix.column_size)
+    assert_equal(result.toBaseMatrix,Matrix.build(@sparseMatrix.row_size,@sparseMatrix.column_size) {|x,y| @sparseMatrix[x,y]*baseMatrix[x,y]})
   end
 
   # check if the given index is in the matrix bounds

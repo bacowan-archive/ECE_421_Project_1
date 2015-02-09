@@ -16,7 +16,6 @@ class RegSparseMatrixFactory < AbstractSparseMatrixFactory
       end
       # create a blank matrix
     elsif args.size == 2
-      print args
       dataStruct = RegSparseDataStructure.new(*args)
       mat = SparseMatrix.new(dataStruct)
       return mat

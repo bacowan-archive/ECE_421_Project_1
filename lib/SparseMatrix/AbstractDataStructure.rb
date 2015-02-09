@@ -11,4 +11,44 @@ class AbstractDataStructure
   def rowCount
     raise NotImplementedError
   end
+
+  def transpose
+    raise NotImplementedError
+  end
+
+  def put
+    raise NotImplementedError
+  end
+
+  def each
+    raise NotImplementedError
+  end
+
+  def each_with_index
+    raise NotImplementedError
+  end
+
+  def []
+    raise NotImplementedError
+  end
+
+  def +(other)
+    raise NotImplementedError
+  end
+
+  def toBaseMatrix
+    raise NotImplementedError
+  end
+
+  def flipHorizontal
+    raise NotImplementedError
+  end
+
+  def flipVertical
+    raise NotImplementedError
+  end
+
+  def flipHorizontal
+    raise NotImplementedError
+  end
 end
