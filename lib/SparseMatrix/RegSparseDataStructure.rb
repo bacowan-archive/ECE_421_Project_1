@@ -104,4 +104,36 @@ class RegSparseDataStructure < AbstractDataStructure
 
   end
 
+  def size
+    return [@rows,@columns]
+  end
+
+  def det
+    raise "Matrix Not Square" unless getRowSize == getColSize
+    if self.getColSize == 2 and self.getRowSize == 2
+      return (self.[0,0] * self.[1,1]) - (self.[0,1] * self.[1,0])
+    elsif self.getColSize > 2 and self.getRowSize > 2
+      
+    end
+    raise NotImplementedError
+  end
+
+  def rowSwitch(index1, index2, dim)
+    raise NotImplementedError
+  end
+
+  def rotate(val)
+    raise NotImplementedError
+  end
+
+  def rank
+    raise NotImplementedError
+  end
+
+  def inv
+    raise "Matrix Not Square" unless getRowSize == getColSize
+    raise "Determinate Zero" unless self.det != 0
+    raise NotImplementedError
+  end
+
 end
