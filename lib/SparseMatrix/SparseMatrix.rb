@@ -103,8 +103,8 @@ class SparseMatrix
   # go through all elements in the array, including zeros.
   # go row by row, then column by column
   def each(&block)
-    (0..@delegate.getRowSize).each { |row|
-      (0..@delegate.getColSize).each { |col|
+    (0..@delegate.getRowSize-1).each { |row|
+      (0..@delegate.getColSize-1).each { |col|
         yield(self[row,col])
       }
     }
