@@ -1,9 +1,11 @@
-require_relative "../lib/SparseMatrix"
-require_relative "../lib/SparseMatrix/NotInvertibleError"
+require_relative "../lib/SparseMatrix/SparseMatrix"
 require "test/unit"
 require "matrix"
 
 class TestSparseMatrix < Test::Unit::TestCase
+
+  # set to something else if you don't want to do contract checks
+  DEBUG = SparseMatrix.DEBUG_FLAG
 
   # size of our matrix
   MAT_ROWS = 100
@@ -115,7 +117,7 @@ class TestSparseMatrix < Test::Unit::TestCase
     _invariants(@sparseMatrix,@originalMatrix)
 
     # run the command
-    @sparseMatrix.put(index,val)
+    @sparseMatrix.put(index,val,DEBUG)
 
     # post-conditions and invariants
     _invariants(@sparseMatrix,@originalMatrix)
@@ -140,7 +142,7 @@ class TestSparseMatrix < Test::Unit::TestCase
                                                  end }
     rows = [nonZeroIndices[0][0], nonZeroIndices[1000][0], nonZeroIndices[200][0]]
     cols = [nonZeroIndices[0][1], nonZeroIndices[1][1], nonZeroIndices[2][1]]
-    ret = @sparseMatrix.subMatrix(rows,cols)
+    ret = @sparseMatrix.subMatrix(rows,cols,DEBUG)
 
     assert_equal(ret.row_size,@sparseMatrix.row_size-3)
     assert_equal(ret.column_size,@sparseMatrix.column_size-3)
@@ -184,7 +186,7 @@ class TestSparseMatrix < Test::Unit::TestCase
     _invariants(@sparseMatrix,@originalMatrix)
 
     # run the command
-    @sparseMatrix.put(index,val)
+    @sparseMatrix.put(index,val,DEBUG)
 
     # post-conditions and invariants
 
@@ -202,7 +204,7 @@ class TestSparseMatrix < Test::Unit::TestCase
     _invariants(@sparseMatrix,@originalMatrix)
 
     # do the operation
-    transposedMatrix = @sparseMatrix.transpose
+    transposedMatrix = @sparseMatrix.transpose(DEBUG)
 
     #post-conditions and invariants
     _invariants(@sparseMatrix,@originalMatrix)
@@ -237,7 +239,7 @@ class TestSparseMatrix < Test::Unit::TestCase
     _invariants(@sparseMatrix,@oldSparseMatrix)
 
     # do the operation
-    result = @sparseMatrix + addMatrix
+    result = @sparseMatrix.send(:+, addMatrix, DEBUG)
 
     # post-conditions and invariants
     _invariants(@sparseMatrix,@oldSparseMatrix)
@@ -268,7 +270,7 @@ class TestSparseMatrix < Test::Unit::TestCase
     _invariants(@sparseMatrix,@oldSparseMatrix)
 
     # do the operation
-    result = @sparseMatrix - subMatrix
+    result = @sparseMatrix.send(:-, subMatrix, DEBUG)
 
     # post-conditions and invariants
     _invariants(@sparseMatrix,@oldSparseMatrix)
@@ -288,7 +290,7 @@ class TestSparseMatrix < Test::Unit::TestCase
     _invariants(@sparseMatrix,@oldSparseMatrix)
 
     # do the operation
-    result = @sparseMatrix + val
+    result = @sparseMatrix.send(:+,val,DEBUG)
 
     # post-conditions and invariants
     _invariants(@sparseMatrix,@oldSparseMatrix)
@@ -310,7 +312,7 @@ class TestSparseMatrix < Test::Unit::TestCase
     _invariants(@sparseMatrix,@oldSparseMatrix)
 
     # do the operation
-    result = @sparseMatrix - val
+    result = @sparseMatrix.send(:-,val,DEBUG)
 
     # post-conditions and invariants
     _invariants(@sparseMatrix,@oldSparseMatrix)
@@ -323,7 +325,6 @@ class TestSparseMatrix < Test::Unit::TestCase
   end
 
   # test matrix multiplication
-=begin
   def test_mult
     # matrix to multiply
     newMatRows = @sparseMatrix.column_size
@@ -337,19 +338,18 @@ class TestSparseMatrix < Test::Unit::TestCase
     }
     multMatrix = SparseMatrix.create(baseMatrix)
 
-    result = @sparseMatrix * multMatrix
+    result = @sparseMatrix.send(:*,multMatrix,DEBUG)
 
     assert_equal(result.row_size,@sparseMatrix.row_size)
     assert_equal(result.column_size,multMatrix.column_size)
     assert_equal(result.toBaseMatrix,@originalMatrix*baseMatrix)
 
   end
-=end
 
   # test the flip horizontal function
   def test_flip_horizontal
 
-    result = @sparseMatrix.flipHorizontal
+    result = @sparseMatrix.flipHorizontal(DEBUG)
     
     assert_equal(result.internalRepItemCount,@sparseMatrix.internalRepItemCount)
     
@@ -364,7 +364,7 @@ class TestSparseMatrix < Test::Unit::TestCase
   # test the flip vertical function
   def test_flip_vertical
 
-    result = @sparseMatrix.flipVertical
+    result = @sparseMatrix.flipVertical(DEBUG)
 
     assert_equal(result.internalRepItemCount,@sparseMatrix.internalRepItemCount)
 
@@ -377,22 +377,19 @@ class TestSparseMatrix < Test::Unit::TestCase
   end
 
   # test scalar multiplication
-=begin
   def test_scalar_mult
     # value to multiply
     val = 5
 
-    result = @sparseMatrix * val
+    result = @sparseMatrix.send(:*,val,DEBUG)
 
     assert_equal(result.row_size,@sparseMatrix.row_size)
     assert_equal(result.column_size,@sparseMatrix.column_size)
     assert_equal(result.toBaseMatrix,@originalMatrix*val)
 
   end
-=end
 
   # test elementwise multiplication
-=begin
   def test_element_mult
     # matrix to multiply
     baseMatrix = Matrix.build(@sparseMatrix.row_size,@sparseMatrix.column_size) { |row,col|
@@ -404,13 +401,12 @@ class TestSparseMatrix < Test::Unit::TestCase
     }
     multMatrix = SparseMatrix.create(baseMatrix)
 
-    result = @sparseMatrix.elementMult(multMatrix)
+    result = @sparseMatrix.elementMult(multMatrix,DEBUG)
 
     assert_equal(result.row_size,@sparseMatrix.row_size)
     assert_equal(result.column_size,@sparseMatrix.column_size)
     assert_equal(result.toBaseMatrix,Matrix.build(@sparseMatrix.row_size,@sparseMatrix.column_size) {|x,y| @sparseMatrix[x,y]*baseMatrix[x,y]})
   end
-=end
 
   # check if the given index is in the matrix bounds
   # +index+:: the index in the matrix, in the form [row,col]
