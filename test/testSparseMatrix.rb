@@ -53,6 +53,14 @@ class TestSparseMatrix < Test::Unit::TestCase
     assert_equal(mat3.toBaseMatrix, mat2, "rowSwitch fail")
   end
 
+  def test_rowOper
+    mat = SparseMatrix.create(Matrix[[1,2],[3,4]])
+    mat_add = Matrix[[4,6],[3,4]]
+    mat_mult = Matrix[[3,8],[3,4]]
+    assert_equal(mat.rowOper(0,1,:+).toBaseMatrix,mat_add,"add")
+    assert_equal(mat.rowOper(0,1,:*).toBaseMatrix,mat_mult,"mult")
+  end
+
   def test_row
     mat = SparseMatrix.create(Matrix[[1,2,3,4],[5,6,7,8]])
     row = mat.row(0)
@@ -70,8 +78,10 @@ class TestSparseMatrix < Test::Unit::TestCase
   end
 
   def test_rank
-    mat = SparseMatrix.create(Matrix[[1,2,3],[4,5,6],[7,8,9]])
-    assert_equal(mat.rank,2,"rank error")
+    mat = SparseMatrix.create(Matrix[[2,2,-1],[4,0,2],[0,6,-1]])
+    mat2 = SparseMatrix.create(Matrix[[2,2,-1,1],[4,0,2,2],[0,6,-1,4]])
+    assert_equal(mat.rank,3)
+    assert_equal(mat2.rank,3)
   end
 
   def test_det
@@ -80,11 +90,10 @@ class TestSparseMatrix < Test::Unit::TestCase
   end
 
   def test_inv
-    mat = SparseMatrix.create(Matrix[[4,7],[2,6]])
-    mat_inv = SparseMatrix.create(Matrix[[0.6,-0.7],[-0.2,0.4]])
-    assert_equal(mat.inv,mat_inv,"inverse fail")
+    mat = SparseMatrix.create(Matrix[[1,2,3],[0,4,5],[1,0,6]])
+    mat_inv = Matrix[[(12.0/11.0).round(10),(-6.0/11.0).round(10),(-1.0/11.0).round(10)],[(5.0/22.0).round(10),(3.0/22.0).round(10),(-5.0/22.0).round(10)],[(-2.0/11.0).round(10),(1.0/11.0).round(10),(2.0/11.0).round(10)]]
+    assert_equal(mat.inv.toBaseMatrix,mat_inv,"inverse fail")
   end
-
 
   # modify non-zero values in matrix by supplying an index
   # and a new value

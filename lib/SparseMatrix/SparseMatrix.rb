@@ -166,6 +166,11 @@ class SparseMatrix
     @delegate.getRowSize
   end
 
+  def rowOper(index1,index2,oper)
+    dup = @delegate.clone
+    return dup.rowOper(index1,index2,oper)
+  end
+
   # get the column size
   def column_size
     @delegate.getColSize

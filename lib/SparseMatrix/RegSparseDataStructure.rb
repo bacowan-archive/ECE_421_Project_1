@@ -162,7 +162,7 @@ class RegSparseDataStructure < AbstractDataStructure
     oldRows = @rows
     @rows = @columns
     @columns = oldRows
-
+    return self
   end
 
   # add the value from another array to this one, and return the result
@@ -243,6 +243,7 @@ class RegSparseDataStructure < AbstractDataStructure
     # readjust the lengths
     @rows -= rowsdup.length
     @columns -= colsdup.length
+    return self
   end
 
   # flip this matrix horizontally
@@ -307,15 +308,18 @@ class RegSparseDataStructure < AbstractDataStructure
 
   def det
     raise "Matrix Not Square" unless getRowSize == getColSize
-    if self.getColSize == 2 and self.getRowSize == 2
+    if self.getColSize == 1 and self.getRowSize == 1
+      return 1.0/self[0,0]
+    elsif self.getColSize == 2 and self.getRowSize == 2
       return (self[0,0] * self[1,1]) - (self[0,1] * self[1,0])
     elsif self.getColSize > 2 and self.getRowSize > 2
       result = 0
       flip = 1
 
       (0..@columns).each{|i|
-       submat = self.subMatrix(0,i)
-       result = result + flip * map[0][i] * submat.det
+       mat = self.clone
+       mat.subMatrix([0],[i])
+       result = result + flip * self[0][i] * mat.det
        flip = -1 * flip }
       return result
     end
@@ -397,16 +401,34 @@ class RegSparseDataStructure < AbstractDataStructure
     return pivot_row
   end
 
+  def rowOper(index1,index2, symbol)
+    dup = self.clone
+    row = dup.row(index1)
+    (0..dup.getColSize-1).each{|i|
+      dup[index1][i] = dup[index1][i].send(symbol, dup[index2][i])
+    }
+    return dup
+  end
+
   def inv
     raise "Matrix Not Square" unless getRowSize == getColSize
     raise "Determinate Zero" unless self.det != 0
-    dup = self.clone
-    dup.transpose
-    (0..@rows).each{|row|
-      (0..@columns).each{ |col|
-        dup[row][col] = dup[row][col] / self.det
+    result = SparseMatrix.create(self.getRowSize,self.getColSize)
+
+    (0..getRowSize-1).each{|i|
+      (0..getColSize-1).each{|j|
+        dup = self.clone
+        dup = dup.subMatrix([i],[j])
+        sum = i + j
+        var2 = dup.det
+        var = (-1.0)**(sum)
+        result[i][j] = (((-1.0)**(sum)) * dup.det)
       }
     }
+    result = result.transpose
+    result = result*((1.0/self.det))
+    result.each_with_index { |index,value | result.put(index,value.round(10))}
+    return result
   end
 
   end
