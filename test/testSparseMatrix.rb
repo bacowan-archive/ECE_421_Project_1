@@ -1,4 +1,4 @@
-require_relative "../lib/SparseMatrix/SparseMatrix"
+require_relative "../lib/SparseMatrix"
 require_relative "../lib/SparseMatrix/NotInvertibleError"
 require "test/unit"
 require "matrix"
