@@ -307,7 +307,6 @@ class RegSparseDataStructure < AbstractDataStructure
   end
 
   def det
-    raise "Matrix Not Square" unless getRowSize == getColSize
     if self.getColSize == 1 and self.getRowSize == 1
       return 1.0/self[0,0]
     elsif self.getColSize == 2 and self.getRowSize == 2
@@ -411,10 +410,7 @@ class RegSparseDataStructure < AbstractDataStructure
   end
 
   def inv
-    raise "Matrix Not Square" unless getRowSize == getColSize
-    raise "Determinate Zero" unless self.det != 0
     result = SparseMatrix.create(self.getRowSize,self.getColSize)
-
     (0..getRowSize-1).each{|i|
       (0..getColSize-1).each{|j|
         dup = self.clone

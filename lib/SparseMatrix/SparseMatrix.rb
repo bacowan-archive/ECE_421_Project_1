@@ -43,12 +43,18 @@ class SparseMatrix
   end
 
   def det
+    raise "Matrix Not Square" unless getRowSize == getColSize
     return @delegate.det
   end
 
   def inv
-    newDelegate = @delegate.clone
-    return newDelegate.inv
+    raise "Matrix Not Square" unless getRowSize == getColSize
+    raise "Determinate Zero" unless self.det != 0
+    oldDelegate = @delegate.clone
+    newDelegate = @delegate.clone.inv
+    identity = Matrix.I(getRowSize)
+    raise "Inversion False" unless oldDelegate * newDelegate == identity
+    return newDelegate
   end
 
   def rank
@@ -167,6 +173,7 @@ class SparseMatrix
   end
 
   def rowOper(index1,index2,oper)
+    _inbounds(index1,@delegate)
     dup = @delegate.clone
     return dup.rowOper(index1,index2,oper)
   end
