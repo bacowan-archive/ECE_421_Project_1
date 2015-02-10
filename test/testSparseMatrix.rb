@@ -39,6 +39,62 @@ class TestSparseMatrix < Test::Unit::TestCase
     # nothing to do here
   end
 
+  def test_size
+    spar = SparseMatrix.create(123,456)
+    siz = spar.size
+    assert_equal(siz[0],123, "row size error")
+    assert_equal(siz[1],456, "col size error")
+  end
+
+  def test_rowSwitch
+    mat1 = SparseMatrix.create(Matrix[[1,2],[3,4]])
+    mat2 = Matrix[[3,4],[1,2]]
+    mat3 = mat1.rowSwitch(0,1,0)
+    assert_equal(mat3.toBaseMatrix, mat2, "rowSwitch fail")
+  end
+
+  def test_rowOper
+    mat = SparseMatrix.create(Matrix[[1,2],[3,4]])
+    mat_add = Matrix[[4,6],[3,4]]
+    mat_mult = Matrix[[3,8],[3,4]]
+    assert_equal(mat.rowOper(0,1,:+).toBaseMatrix,mat_add,"add")
+    assert_equal(mat.rowOper(0,1,:*).toBaseMatrix,mat_mult,"mult")
+  end
+
+  def test_row
+    mat = SparseMatrix.create(Matrix[[1,2,3,4],[5,6,7,8]])
+    row = mat.row(0)
+    assert_equal(row,[1,2,3,4],"row error")
+  end
+
+  def test_rotate
+    mat1 = SparseMatrix.create(Matrix[[1,2],[3,4]])
+    mat4 = Matrix[[3,1],[4,2]]
+    mat3 = Matrix[[4,3],[2,1]]
+    mat2 = Matrix[[2,4],[1,3]]
+    assert_equal(mat1.rotate(0).toBaseMatrix,mat2,"90 degree rotate fail")
+    assert_equal(mat1.rotate(1).toBaseMatrix,mat3,"180 degree rotate fail")
+    assert_equal(mat1.rotate(2).toBaseMatrix,mat4,"270 degree rotate fail")
+  end
+
+  def test_rank
+    mat = SparseMatrix.create(Matrix[[2,2,-1],[4,0,2],[0,6,-1]])
+    mat2 = SparseMatrix.create(Matrix[[2,2,-1,1],[4,0,2,2],[0,6,-1,4]])
+    assert_equal(mat.rank,3)
+    assert_equal(mat2.rank,3)
+  end
+
+  def test_det
+    mat = SparseMatrix.create(Matrix[[6,1,1],[4,-2,5],[2,8,7]])
+    assert_equal(mat.det,-306,"det error")
+  end
+
+  def test_inv
+    mat = SparseMatrix.create(Matrix[[1,2,3],[0,4,5],[1,0,6]])
+    mat_inv = Matrix[[(12.0/11.0).round(10),(-6.0/11.0).round(10),(-1.0/11.0).round(10)],[(5.0/22.0).round(10),(3.0/22.0).round(10),(-5.0/22.0).round(10)],[(-2.0/11.0).round(10),(1.0/11.0).round(10),(2.0/11.0).round(10)]]
+    assert_equal(mat.inv.toBaseMatrix,mat_inv,"inverse fail")
+  end
+
   # modify non-zero values in matrix by supplying an index
   # and a new value
   def test_put

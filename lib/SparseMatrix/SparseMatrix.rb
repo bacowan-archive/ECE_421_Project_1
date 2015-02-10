@@ -42,6 +42,37 @@ class SparseMatrix
     @delegate = delegate
   end
 
+  def det
+    return @delegate.det
+  end
+
+  def inv
+    newDelegate = @delegate.clone
+    return newDelegate.inv
+  end
+
+  def rank
+    return @delegate.rank
+  end
+
+  def rotate(val)
+    newDelegate = @delegate.clone
+    return newDelegate.rotate(val)
+  end
+
+  def row(index)
+    return @delegate.row(index)
+  end
+
+  def rowSwitch(index1, index2, dim)
+    newDelegate = @delegate.clone
+    return newDelegate.rowSwitch(index1,index2,dim)
+  end
+
+  def size
+    return @delegate.size
+  end
+
   # return the transpose of this matrix
   def transpose
 
@@ -133,6 +164,11 @@ class SparseMatrix
   # get the row size
   def row_size
     @delegate.getRowSize
+  end
+
+  def rowOper(index1,index2,oper)
+    dup = @delegate.clone
+    return dup.rowOper(index1,index2,oper)
   end
 
   # get the column size
