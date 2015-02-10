@@ -121,15 +121,6 @@ class TestSparseMatrix < Test::Unit::TestCase
       unless i == rows[0] or i == rows[1] or i == rows[2]
         (0..@sparseMatrix.column_size-1).each { |j|
           unless false#j == cols[0] or j == cols[1] or j == cols[2]
-            print i
-            puts ''
-            print j
-            puts ''
-            print starti
-            puts ''
-            print startj
-            puts ''
-            puts''
             assert_equal(@sparseMatrix[i,j],ret[starti,startj])
             startj += 1
           end

@@ -142,9 +142,26 @@ class SparseMatrix
 
   # Create a submatrix of this, removing rows and cols
   def subMatrix(rows,cols)
+    # preconditions and invariants
+    _invariants
+    rows.each { |i|
+      assert(i >= 0, "pre-condition")
+      assert(i < row_size, "pre-condition")
+    }
+    cols.each { |i|
+      assert(i >= 0, "pre-condition")
+      assert(i < column_size, "pre-condition")
+    }
+
     newDelegate = @delegate.clone
     newDelegate.subMatrix(rows,cols)
     newMatrix = SparseMatrix.new(newDelegate)
+
+    # post-conditions and invariants
+    _invariants
+    assert_equal(newMatrix.column_size,column_size-cols.uniq.length,"post-condition")
+    assert_equal(newMatrix.row_size,row_size-rows.uniq.length,"post-condition")
+
     return newMatrix
   end
 
