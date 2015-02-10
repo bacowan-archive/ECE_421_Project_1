@@ -1,6 +1,8 @@
 require_relative "../lib/SparseMatrix/SparseMatrix"
+require_relative '../lib/SparseMatrix/NotInvertibleError'
 require "test/unit"
 require "matrix"
+
 
 class TestSparseMatrix < Test::Unit::TestCase
 
@@ -498,27 +500,31 @@ class TestSparseMatrix < Test::Unit::TestCase
     assert_equal(sparseMatrix - diffMatrix + diffMatrix ,sparseMatrix)
 
     # The inverse of the determinant is the same as the determinant of the inverse
-    #assert_equal(sparseMatrix.inverse.determinant,sparseMatrix.determinant.inverse)
+    #begin
+    #  assert_equal(sparseMatrix.inv.det,1.0/sparseMatrix.det)
+    #rescue NotInvertibleError
+    #end
 
     # if you switch two rows in a matrix back and forth, you will end with the same matrix
-    #assert_equal(sparseMatrix.rowSwitch(2,3,0).rowSwitch(2,3,0),sparseMatrix)
+    assert_equal(sparseMatrix.rowSwitch(2,3,0).rowSwitch(2,3,0),sparseMatrix)
+
 
     # if you mirror the matrix twice (on either axis), it should be the same as the original
     assert_equal(sparseMatrix.flipHorizontal.flipHorizontal,sparseMatrix)
     assert_equal(sparseMatrix.flipVertical.flipVertical,sparseMatrix)
 
     # rotations that total to 360 degrees will be the same as the original matrix
-    #assert_equal(sparseMatrix.rotate(0).rotate(0).rotate(0).rotate(0),sparseMatrix)
-    #assert_equal(sparseMatrix.rotate(1).rotate(1),sparseMatrix)
-    #assert_equal(sparseMatrix.rotate(2).rotate(0),sparseMatrix)
+    assert_equal(sparseMatrix.rotate(0).rotate(0).rotate(0).rotate(0),sparseMatrix)
+    assert_equal(sparseMatrix.rotate(1).rotate(1),sparseMatrix)
+    assert_equal(sparseMatrix.rotate(2).rotate(0),sparseMatrix)
 
     # the inverse of the inverse of a matrix is itself
     # (this is only true for invertable matrices)
     #begin
-    #  assert_equal(sparseMatrix.inverse.inverse,sparseMatrix)
+    #  assert_equal(sparseMatrix.inv.inv,sparseMatrix)
     #rescue NotInvertibleError
     #else
-    #  #assert(false)
+    #  assert(false)
     #end
 
   end

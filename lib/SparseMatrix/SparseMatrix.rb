@@ -10,8 +10,7 @@ require "matrix"
 class SparseMatrix
 
   def SparseMatrix.DEBUG_FLAG
-    #"DEBUG_FLAG"
-    true
+    "DEBUG_FLAG"
   end
 
   # static factory method for creating a sparse matrix
@@ -47,41 +46,212 @@ class SparseMatrix
     @delegate = delegate
   end
 
-  def det
-    raise "Matrix Not Square" unless getRowSize == getColSize
-    return @delegate.det
+  def det(*args)
+    unless args.length == 0 or args.length == 1
+      raise 'wrong number of args'
+    end
+    debug = false
+    if args.length == 1 and args[0] == SparseMatrix.DEBUG_FLAG
+      debug = true
+    end
+
+    raise "Matrix Not Square" unless row_size == column_size
+    # pre-conditions and invariants
+    if debug
+      _invariants
+    end
+
+    det = @delegate.det
+
+    if debug
+      _invariants
+      assertEqual(det,self.toBaseMatrix.determinant)
+    end
+
+    return det
   end
 
-  def inv
-    raise "Matrix Not Square" unless getRowSize == getColSize
-    raise "Determinate Zero" unless self.det != 0
-    oldDelegate = @delegate.clone
-    newDelegate = @delegate.clone.inv
-    identity = Matrix.I(getRowSize)
-    raise "Inversion False" unless oldDelegate * newDelegate == identity
+  def inv(*args)
+    unless args.length == 0 or args.length == 1
+      raise 'wrong number of args'
+    end
+    debug = false
+    if args.length == 1 and args[0] == SparseMatrix.DEBUG_FLAG
+      debug = true
+    end
+
+    # pre-conditions and invariants
+    raise NotInvertibleError unless row_size == column_size
+    raise NotInvertibleError unless self.det != 0
+    if debug
+      oldDelegate = @delegate.clone
+      _invariants
+    end
+
+    begin
+      newDelegate = @delegate.clone.inv
+    rescue
+      raise NotInvertibleError
+    end
+
+
+    if debug
+      identity = Matrix.I(row_size)
+      raise "Inversion False" unless oldDelegate * newDelegate == identity
+      assert_equal(newMatrix.column_size, self.column_size, "returning a matrix of the wrong dimensions")
+      assert_equal(newMatrix.row_size, self.row_size, "returning a matrix of the wrong dimensions")
+      _invariants
+    end
+
     return newDelegate
   end
 
-  def rank
-    return @delegate.rank
+  def rank(*args)
+    unless args.length == 0 or args.length == 1
+      raise 'wrong number of args'
+    end
+    debug = false
+    if args.length == 1 and args[0] == SparseMatrix.DEBUG_FLAG
+      debug = true
+    end
+
+    # pre-conditions and invariants
+    if debug
+      _invariants
+    end
+
+    rank = @delegate.rank
+
+    # post-conditions and invariants
+    if debug
+      _invariants
+    end
+
+    return rank
   end
 
-  def rotate(val)
+  def rotate(*args)
+    unless args.length == 1 or args.length == 2
+      raise 'wrong number of args'
+    end
+
+    val = args[0]
+
+    debug = false
+    if args.length == 2 and args[0] == SparseMatrix.DEBUG_FLAG
+      debug = true
+    end
+
+    # pre-conditions and invariants
+    if debug
+      _invariants
+      assert((val == 0 or val == 1 or val == 2), 'val not valid')
+    end
+
     newDelegate = @delegate.clone
-    return newDelegate.rotate(val)
+    rot = newDelegate.rotate(val)
+    newMat = SparseMatrix.new(rot)
+
+    # post-conditions and invariants
+    if debug
+      _invariants
+      assert_equal(self.column_size,rot.row_size,"rotate returning matrix of wrong size")
+      assert_equal(self.row_size,rot.column_size,"rotate returning matrix of wrong size")
+      if val == 0
+        assert_equal(rot[row_size-1,0],self[0,0],"not properly rotated")
+      elsif val == 1
+        assert_equal(rot[row_size-1,0],self[0,column_size-1],"not properly rotated")
+      else
+        assert_equal(rot[row_size-1,0],self[row_size-1,column_size-1],"not properly rotated")
+      end
+    end
+
+    return newMat
+  end
+
+  def col(index)
+    col = @delegate.col(index)
+    return col
   end
 
   def row(index)
-    return @delegate.row(index)
+    row = @delegate.row(index)
+    return row
   end
 
-  def rowSwitch(index1, index2, dim)
+  # switch two rows or columns, depending on the dim, where dim is 0 or 1 (rows or columns, respectively)
+  def rowSwitch(*args)
+    unless args.length == 3 or args.length == 4
+      raise 'wrong number of args'
+    end
+
+    index1 = args[0]
+    index2 = args[1]
+    dim = args[2]
+
+    debug = false
+    if args.length == 4 and args[3] == SparseMatrix.DEBUG_FLAG
+      debug = true
+    end
+
+    # pre-conditions and invariants
+    if debug
+      _invariants
+      assert((dim == 0 or dim == 1),"wrong number of dimensions")
+      if dim == 0
+        _inbounds(index1,0)
+        _inbounds(index2,0)
+        oldRow1 = row(index1)
+        oldRow2 = row(index2)
+      else
+        _inbounds(0,index1)
+        _inbounds(0,index2)
+        oldRow1 = col(index1)
+        oldRow2 = col(index2)
+      end
+    end
+
     newDelegate = @delegate.clone
-    return newDelegate.rowSwitch(index1,index2,dim)
+    switch = newDelegate.rowSwitch(index1,index2,dim)
+    newMat = SparseMatrix.new(switch)
+
+    # post-conditions and invariants
+    if debug
+      _invariants
+      if dim == 0
+        assert_equal(oldRow1, switch.row(index2),"rows not switched")
+        assert_equal(oldRow2, switch.row(index1),"rows not switched")
+      else
+        assert_equal(oldRow1, switch.col(index2),"columns not switched")
+        assert_equal(oldRow2, switch.col(index1),"columns not switched")
+      end
+    end
+
+    return newMat
   end
 
-  def size
-    return @delegate.size
+  def size(*args)
+    unless args.length == 0 or args.length == 1
+      raise 'wrong number of args'
+    end
+    debug = false
+    if args.length == 1 and args[0] == SparseMatrix.DEBUG_FLAG
+      debug = true
+    end
+
+    # pre-conditions and invariants
+    if debug
+      _invariants
+    end
+
+    sz = @delegate.size
+
+    # post-conditions and invariants
+    if debug
+      _invariants
+    end
+
+    return sz
   end
 
   # return the transpose of this matrix
@@ -107,11 +277,11 @@ class SparseMatrix
     # post-conditions and invariants
     if debug
       _invariants
-      assert_equal(self.row_size,newMatrix.column_size,"post-condition")
-      assert_equal(self.column_size,newMatrix.row_size,"post-condition")
+      assert_equal(self.row_size,newMatrix.column_size,"post-condition the number of columns in the output is not equal to the number of rows in the input")
+      assert_equal(self.column_size,newMatrix.row_size,"post-condition: the number of rows in the output is not equal to the number of columns in the input")
       (0..self.row_size-1).each { |i|
         (0..self.column_size-1).each { |j|
-          assert_equal(self[i,j],newMatrix[j,i],"post-condition")
+          assert_equal(self[i,j],newMatrix[j,i],"post-condition: the matrix transpose was not correctly preformed")
         }
       }
     end
@@ -144,8 +314,8 @@ class SparseMatrix
     if debug
       # preconditions and invariants
       _invariants
-      assert(_inbounds(index,self),"pre-condition")
-      assert((val.is_a? Numeric), "pre-condition")
+      assert(_inbounds(index,self),"pre-condition: the index given is out of bounds")
+      assert((val.is_a? Numeric), "pre-condition: the input value must be numeric")
       # keep track for post-conditions
       oldVal = self[index]
       oldRepItemCount = self.internalRepItemCount
@@ -156,15 +326,15 @@ class SparseMatrix
     # post conditions and invariants
     if debug
       _invariants
-      assert_equal( self[index], val, "post-condition" )
-      assert(self.include?(val), "post-condition")
+      assert(self.include?(val), "post-condition: the item was not put into the matrix")
+      assert_equal( self[index], val, "post-condition: the item was not put into the matrix in the proper position" )
       # slightly different behavior for setting zero and non-zero values
       if val == 0 and oldVal != 0
-        assert_equal(self.internalRepItemCount,oldRepItemCount-1,"post-condition")
+        assert_equal(self.internalRepItemCount,oldRepItemCount-1,"post-condition: put gives an invalid result")
       elsif (val != 0 and oldVal != 0) or (val == 0 and oldVal == 0)
-        assert_equal(self.internalRepItemCount,oldRepItemCount,"post-condition")
+        assert_equal(self.internalRepItemCount,oldRepItemCount,"post-condition: put gives an invalid result")
       elsif val != 0 and oldVal == 0
-        assert_equal(self.internalRepItemCount,oldRepItemCount+1,"post-condition")
+        assert_equal(self.internalRepItemCount,oldRepItemCount+1,"post-condition: put gives an invalid result")
       end
     end
 
@@ -206,7 +376,8 @@ class SparseMatrix
   end
 
   def rowOper(index1,index2,oper)
-    _inbounds(index1,@delegate)
+    assert(_inbounds([index1,0],self),"rowOper has inout of bounds items")
+    assert(_inbounds([index2,0],self),"rowOper has inout of bounds items")
     dup = @delegate.clone
     return dup.rowOper(index1,index2,oper)
   end
@@ -234,12 +405,12 @@ class SparseMatrix
     # preconditions and invariants
       _invariants
       rows.each { |i|
-        assert(i >= 0, "pre-condition")
-        assert(i < row_size, "pre-condition")
+        assert(i >= 0, "pre-condition: one of the given rows is out of bounds")
+        assert(i < row_size, "pre-condition: one of the given rows is out of bounds")
       }
       cols.each { |i|
-        assert(i >= 0, "pre-condition")
-        assert(i < column_size, "pre-condition")
+        assert(i >= 0, "pre-condition: one of the given columns is out of bounds")
+        assert(i < column_size, "pre-condition: one of the given columns is out of bounds")
       }
     end
 
@@ -251,8 +422,8 @@ class SparseMatrix
     if debug
       # post-conditions and invariants
       _invariants
-      assert_equal(newMatrix.column_size,column_size-cols.uniq.length,"post-condition")
-      assert_equal(newMatrix.row_size,row_size-rows.uniq.length,"post-condition")
+      assert_equal(newMatrix.column_size,column_size-cols.uniq.length,"post-condition: submatrix column count is different from expected")
+      assert_equal(newMatrix.row_size,row_size-rows.uniq.length,"post-condition: submatrix row count is different from expected")
     end
 
 
@@ -270,9 +441,8 @@ class SparseMatrix
   end
 
   # string representation of the matrix
-  # TODO: simply return a representation of the matrix being represented
   def to_s
-    mat = Matrix.zero(row_size,column_size)
+    mat = Matrix.zero(row_size,column_size).to_a
     self.each_with_index { |index,val|
       mat[index[0],index[1]] = val
     }
@@ -296,12 +466,12 @@ class SparseMatrix
     if debug
       _invariants
       if other.respond_to? :getDelegate
-        assert_equal(self.row_size,other.row_size,"pre-condition")
-        assert_equal(self.column_size,other.column_size,"pre-condition")
+        assert_equal(self.row_size,other.row_size,"pre-condition: the two matrices being added together should have the same number of columns")
+        assert_equal(self.column_size,other.column_size,"pre-condition: the two matrices being added together should have the same number of columns")
       elsif other.is_a? Numeric
         # no pre-conditions
       else
-        assert(false,"pre-condition")
+        assert(false,"pre-condition: wrong input type for addition")
       end
     end
 
@@ -319,13 +489,13 @@ class SparseMatrix
       # post-conditions and invariants
       _invariants
       if other.respond_to? :getDelegate
-        assert_equal(newMatrix.row_size,self.row_size,"post-condition")
-        assert_equal(newMatrix.column_size,self.column_size,"post-condition")
-        assert_equal(newMatrix.toBaseMatrix,other.toBaseMatrix+self.toBaseMatrix,"post-condition")
+        assert_equal(newMatrix.row_size,self.row_size,"post-condition: the result of scalar addition has a different number of rows than the original")
+        assert_equal(newMatrix.column_size,self.column_size,"post-condition: the result of scalar addition has a different number of columns than the original")
+        assert_equal(newMatrix.toBaseMatrix,other.toBaseMatrix+self.toBaseMatrix,"post-condition: wrong result from scalar addition")
       elsif other.is_a? Numeric
-        assert_equal(newMatrix.row_size,self.row_size,"post-condition")
-        assert_equal(newMatrix.column_size,self.column_size,"post-condition")
-        assert_equal(newMatrix.toBaseMatrix,Matrix.build(self.row_size,self.column_size){|x,y| self[x,y]+other},"post-condition")
+        assert_equal(newMatrix.row_size,self.row_size,"post-condition: the result of matrix addition has a different number of rows than the original")
+        assert_equal(newMatrix.column_size,self.column_size,"post-condition: the result of matrix addition has a different number of columns than the original")
+        assert_equal(newMatrix.toBaseMatrix,Matrix.build(self.row_size,self.column_size){|x,y| self[x,y]+other},"post-condition: wrong result from matrix addition")
       end
     end
 
@@ -349,12 +519,12 @@ class SparseMatrix
     if debug
       _invariants
       if other.respond_to? :getDelegate
-        assert_equal(self.row_size,other.row_size,"pre-condition")
-        assert_equal(self.column_size,other.column_size,"pre-condition")
+        assert_equal(self.row_size,other.row_size,"pre-conditions: the two matrices being subtracted must have the same number of rows")
+        assert_equal(self.column_size,other.column_size,"pre-condition: the two matrices being subtracted must have the same number of rows")
       elsif other.is_a? Numeric
         # no pre-conditions
       else
-        assert(false,"pre-condition")
+        assert(false,"pre-condition: invalid input type")
       end
     end
 
@@ -372,13 +542,13 @@ class SparseMatrix
       # post-conditions and invariants
       _invariants
       if other.respond_to? :getDelegate
-        assert_equal(newMatrix.row_size,self.row_size,"post-condition")
-        assert_equal(newMatrix.column_size,self.column_size,"post-condition")
-        assert_equal(newMatrix.toBaseMatrix,self.toBaseMatrix-other.toBaseMatrix,"post-condition")
+        assert_equal(newMatrix.row_size,self.row_size,"post-condition: the result of matrix subtraction has a different number of rows than the original")
+        assert_equal(newMatrix.column_size,self.column_size,"post-condition: the result of scalar subtraction has a different number of columns than the original")
+        assert_equal(newMatrix.toBaseMatrix,self.toBaseMatrix-other.toBaseMatrix,"post-condition: wrong result from scalar subtraction")
       elsif other.is_a? Numeric
-        assert_equal(newMatrix.row_size,self.row_size,"post-condition")
-        assert_equal(newMatrix.column_size,self.column_size,"post-condition")
-        assert_equal(newMatrix.toBaseMatrix,Matrix.build(self.row_size,self.column_size){|x,y| self[x,y]-other},"post-condition")
+        assert_equal(newMatrix.row_size,self.row_size,"post-condition: the result of matrix subtraction has a different number of rows than the original")
+        assert_equal(newMatrix.column_size,self.column_size,"post-condition: the result of matrix subtraction has a different number of columns than the original")
+        assert_equal(newMatrix.toBaseMatrix,Matrix.build(self.row_size,self.column_size){|x,y| self[x,y]-other},"post-condition: wrong result from matrix subtraction")
       end
     end
 
@@ -404,7 +574,7 @@ class SparseMatrix
     if debug
       _invariants
       if other.respond_to? :getDelegate
-        assert_equal(other.row_size,self.column_size,"pre-condition")
+        assert_equal(other.row_size,self.column_size,"pre-condition: the matrix being multiplied by this one does not have the same number of rows as this does columns")
       elsif other.is_a? Numeric
         # no preconditions
       else
@@ -431,13 +601,13 @@ class SparseMatrix
       # post-conditions and invariants
       _invariants
       if other.respond_to? :getDelegate
-        assert_equal(result.row_size,self.row_size,"post-condition")
-        assert_equal(result.column_size,other.column_size,"post-condition")
-        assert_equal(result.toBaseMatrix,self.toBaseMatrix*other.toBaseMatrix,"post-condition")
+        assert_equal(result.row_size,self.row_size,"post-condition: result of matrix multiplication does not have the same number of rows as the original")
+        assert_equal(result.column_size,other.column_size,"post-condition: result of matrix multiplication does not have the same number of columns as what the original was multiplied by")
+        assert_equal(result.toBaseMatrix,self.toBaseMatrix*other.toBaseMatrix,"post-condition: wrong result in matrix multiply")
       elsif other.is_a? Numeric
-        assert_equal(result.row_size,self.row_size,"post-condition")
-        assert_equal(result.column_size,self.column_size,"post-condition")
-        assert_equal(result.toBaseMatrix,self.toBaseMatrix*other,"post-conditions")
+        assert_equal(result.row_size,self.row_size,"post-condition: result of scalar multiplication does not have the same number of rows as the original matrix")
+        assert_equal(result.column_size,self.column_size,"post-condition: result of scalar multiplication does not have the same number of columns as the original matrix")
+        assert_equal(result.toBaseMatrix,self.toBaseMatrix*other,"post-conditions: wrong result in scalar multiply")
       end
     end
 
@@ -461,10 +631,10 @@ class SparseMatrix
 
     # pre-conditions and invariants
     if debug
-      assert((other.respond_to? :[]), "pre-condition")
+      assert((other.respond_to? :[]), "pre-condition: other matrix in an elementwise multiply must respond to \"[]\"")
       _invariants
-      assert_equal(self.row_size,other.row_size, "pre-condition")
-      assert_equal(self.column_size,other.row_size, "pre-condition")
+      assert_equal(self.row_size,other.row_size, "pre-condition: the row sizes must be equal on an elementwise multiply")
+      assert_equal(self.column_size,other.column_size, "pre-condition: the column sizes must be equal on an elementwise multiply")
     end
 
 
@@ -476,7 +646,7 @@ class SparseMatrix
     # post-conditions and invariants
     if debug
       _invariants
-      assert_equal(result.toBaseMatrix,Matrix.build(self.row_size,self.column_size) {|x,y| self[x,y] * other[x,y]}, "post-condition")
+      assert_equal(result.toBaseMatrix,Matrix.build(self.row_size,self.column_size) {|x,y| self[x,y] * other[x,y]}, "post-condition: the elements in the resultant matrix after an elementwise multiply are wrong")
     end
 
 
@@ -506,11 +676,11 @@ class SparseMatrix
     # post-conditions and invariants
     if debug
       _invariants
-      assert_equal(result.internalRepItemCount,self.internalRepItemCount,"post-condition")
+      assert_equal(result.internalRepItemCount,self.internalRepItemCount,"post-condition: vertically mirrored matrix has a different number of items than the original")
       result.each_with_index { |index,val|
         row = index[0]
         col = index[1]
-        assert_equal(val,self[row,self.column_size-1-col],"post-condition")
+        assert_equal(val,self[row,self.column_size-1-col],"post-condition: matrix has not been properly horizontally flipped")
       }
     end
 
@@ -542,11 +712,11 @@ class SparseMatrix
     if debug
       # post-conditions and invariants
       _invariants
-      assert_equal(result.internalRepItemCount,self.internalRepItemCount,"post-condition")
+      assert_equal(result.internalRepItemCount,self.internalRepItemCount,"post-condition: vertically mirrored matrix has a different number of items than the original")
       result.each_with_index { |index,val|
         row = index[0]
         col = index[1]
-        assert_equal(val,self[self.row_size-1-row,col],"post-condition")
+        assert_equal(val,self[self.row_size-1-row,col],"post-condition: matrix has not been properly vertically flipped")
       }
     end
 
@@ -609,22 +779,22 @@ class SparseMatrix
 
   # test the invariants
   def _invariants
-    prng = Random.new(SEED)
+    prng = Random.new()
     # the sparse matrix internal representation should never have
     # more items than zeros in the matrix it represents
     representedMatrix = self.toBaseMatrix
     nonzeros = 0
-    representedMatrix.each { |item |
+    representedMatrix.each { |item|
       if item != 0
         nonzeros += 1
       end
     }
-    assert_equal(internalRepItemCount, nonzeros,'invariant')
+    assert_equal(self.internalRepItemCount, nonzeros, "invariant failure: the sparse matrix internal representation does not have the same number of items as the matrix it represents")
 
     # there should never be any zero values in the internal matrix
     zeros = 0
-    each_with_index { |item, index| zeros += 1 if item == 0 }
-    assert_equal(zeros,0,'invariant')
+    self.each_with_index { |item, index| zeros += 1 if item == 0 }
+    assert_equal(zeros,0,"invariant failure: there are zero values in the internal representation of the matrix")
 
     # make sure the sparse matrix is in the bounds of the original
     maxRow = nil
@@ -635,76 +805,80 @@ class SparseMatrix
         maxRow = index[0]
       end
     }
-    assert(maxRow <= representedMatrix.row_size,'invariant')
+    assert(maxRow <= representedMatrix.row_size, "invariant failure: the sparse matrix is not in the bounds of the matrix it represents")
 
     minRow = nil
-    each_with_index { |item, index|
+    self.each_with_index { |item, index|
       unless minRow.nil?
         minRow = [minRow, index[0]].min
       else
         minRow = index[0]
       end
     }
-    assert(minRow >= 0,'invariant')
+    assert(minRow >= 0, "invariant failure: the sparse matrix is not in the bounds of the matrix it represents")
 
     maxCol = nil
-    each_with_index { |item, index|
+    self.each_with_index { |item, index|
       unless maxCol.nil?
         maxCol = [maxCol, index[1]].max
       else
         maxCol = index[1]
       end
     }
-    assert(maxCol <= representedMatrix.column_size,'invariant')
+    assert(maxCol <= representedMatrix.column_size, "invariant failure: the sparse matrix is not in the bounds of the matrix it represents")
 
     minCol = nil
-    each_with_index { |item, index|
+    self.each_with_index { |item, index|
       unless minCol.nil?
         minCol = [minCol, index[1]].min
       else
         minCol = index[1]
       end
     }
-    assert(minCol >= 0,'invariant')
+    assert(minCol >= 0, "invariant failure: the sparse matrix is not in the bounds of the matrix it represents")
 
     # Insure that our matrix starts at 0,0 (as opposed to 1,1, for example)
-    assert_equal(self[0,0],representedMatrix[0,0],'invariant')
+    assert_equal(self[0,0],representedMatrix[0,0], "invariant failure: the sparse matrix does not appear to be zero indexed")
 
     # The transpose of a transpose is itself
-    assert_equal(transpose.transpose,self,'invariant')
+    assert_equal(self.transpose.transpose,self, "invariant failure: the transpose of the transpose of the sparse matrix is not itself")
 
     # a matrix plus a scalar, minus the same scalar is itself
-    assert_equal(self+5-5,self,'invariant')
+    assert_equal(self+5-5,self, "invariant failure: this matrix plus a scalar minus a scalar is not returning the same matrix")
 
     # a matrix added to a matrix, then subtracted by the same matrix is itself
     # (and vice versa)
     diffMatrixOriginal = Matrix.build(self.row_size, self.column_size) { |row,col| prng.rand(10) }
     diffMatrix = SparseMatrix.create(diffMatrixOriginal)
-    assert_equal(self + diffMatrix -diffMatrix ,self,'invariant')
-    assert_equal(self - diffMatrix + diffMatrix ,self,'invariant')
+    assert_equal(self + diffMatrix -diffMatrix ,self, "invariant failure: this matrix plus a matrix minus a the matrix is not producing the same result")
+    assert_equal(self - diffMatrix + diffMatrix ,self, "invariant failure: this matrix plus a matrix minus a the matrix is not producing the same result")
 
     # The inverse of the determinant is the same as the determinant of the inverse
-    #assert_equal(sparseMatrix.inverse.determinant,sparseMatrix.determinant.inverse)
+    #begin
+    #  assert_equal(sparseMatrix.inv.det,1.0/sparseMatrix.det)
+    #rescue NotInvertibleError
+    #end
 
     # if you switch two rows in a matrix back and forth, you will end with the same matrix
-    #assert_equal(sparseMatrix.rowSwitch(2,3,0).rowSwitch(2,3,0),sparseMatrix)
+    assert_equal(self.rowSwitch(2,3,0).rowSwitch(2,3,0),self, "invariant failure: switching two rows in this matrix does not yield the original matrix")
+
 
     # if you mirror the matrix twice (on either axis), it should be the same as the original
-    assert_equal(self.flipHorizontal.flipHorizontal,self,'invariant')
-    assert_equal(self.flipVertical.flipVertical,self,'invariant')
+    assert_equal(self.flipHorizontal.flipHorizontal,self, "invariant failure: this sparse matrix mirrored horizontally does not yield the original matrix")
+    assert_equal(self.flipVertical.flipVertical,self, "invariant failure: this sparse matrix mirrored vertically does not yield the original matrix")
 
     # rotations that total to 360 degrees will be the same as the original matrix
-    #assert_equal(sparseMatrix.rotate(0).rotate(0).rotate(0).rotate(0),sparseMatrix)
-    #assert_equal(sparseMatrix.rotate(1).rotate(1),sparseMatrix)
-    #assert_equal(sparseMatrix.rotate(2).rotate(0),sparseMatrix)
+    assert_equal(self.rotate(0).rotate(0).rotate(0).rotate(0),self, "invariant failure: 4 rotations of 90 degrees doesn't yield the same result")
+    assert_equal(self.rotate(1).rotate(1),self, "invariant failure: 2 rotations of 180 degrees doesn't yield the same result")
+    assert_equal(self.rotate(2).rotate(0),self, "invariant failure: 1 rotations of 270 degrees and 1 rotation of 90 degrees doesn't yield the same result")
 
     # the inverse of the inverse of a matrix is itself
     # (this is only true for invertable matrices)
     #begin
-    #  assert_equal(sparseMatrix.inverse.inverse,sparseMatrix)
+    #  assert_equal(sparseMatrix.inv.inv,sparseMatrix)
     #rescue NotInvertibleError
     #else
-    #  #assert(false)
+    #  assert(false)
     #end
 
   end

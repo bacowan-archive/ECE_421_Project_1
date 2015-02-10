@@ -57,8 +57,12 @@ class RegSparseDataStructure < AbstractDataStructure
     dims = dupIndex.size
 
     # TODO: current implementation is only for 2d arrays
-    raise "index has the wrong number of values (#{dims} instead of 2)" unless dims == 2
-    raise "index #{dupIndex} is out of bounds" unless dupIndex[0] >= 0 and dupIndex[0] < @rows and dupIndex[1] >= 0 and dupIndex[1] < @columns
+    unless dims == 2
+      raise "index has the wrong number of values (#{dims} instead of 2)"
+    end
+    unless dupIndex[0] >= 0 and dupIndex[0] < @rows and dupIndex[1] >= 0 and dupIndex[1] < @columns
+      raise "index #{dupIndex} is out of bounds"
+    end
 
     # note: from http://stackoverflow.com/questions/14294751/how-to-set-nested-hash-in-ruby-dynamically
     _putIntoMap(@map,index,val)
@@ -99,7 +103,14 @@ class RegSparseDataStructure < AbstractDataStructure
 
   # iterate through all the elements in the array
   def each_with_index(&block)
-    _map_iterate(@map,[],&block)
+    @map.each {|key1,val1|
+      unless val1 == nil
+        val1.each {|key2,val2|
+          yield([key1,key2],val2)
+        }
+      end
+    }
+    #_map_iterate(@map,[],&block)
   end
 
   # Iterate through the given map recursively, and yield to the block
@@ -307,6 +318,7 @@ class RegSparseDataStructure < AbstractDataStructure
   end
 
   def det
+    raise "Matrix Not Square" unless @rows == @columns
     if self.getColSize == 1 and self.getRowSize == 1
       return 1.0/self[0,0]
     elsif self.getColSize == 2 and self.getRowSize == 2
@@ -315,7 +327,7 @@ class RegSparseDataStructure < AbstractDataStructure
       result = 0
       flip = 1
 
-      (0..@columns).each{|i|
+      (0..@columns-1).each{|i|
        mat = self.clone
        mat.subMatrix([0],[i])
        result = result + flip * self[0][i] * mat.det
@@ -339,6 +351,12 @@ class RegSparseDataStructure < AbstractDataStructure
           raise "dim is 0 for row, and 1 for column"
     end
     return self
+  end
+
+  def col(index)
+    mat = []
+    (0..self.getRowSize).each {|i| mat[i] = @mat[i][index]}
+    return mat
   end
 
   def row(index)
@@ -416,8 +434,6 @@ class RegSparseDataStructure < AbstractDataStructure
         dup = self.clone
         dup = dup.subMatrix([i],[j])
         sum = i + j
-        var2 = dup.det
-        var = (-1.0)**(sum)
         result[i][j] = (((-1.0)**(sum)) * dup.det)
       }
     }

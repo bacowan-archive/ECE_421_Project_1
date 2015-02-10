@@ -1,0 +1,2 @@
+class NotInvertibleError < Exception
+end
