@@ -178,11 +178,11 @@ class SparseMatrix
   # string representation of the matrix
   # TODO: simply return a representation of the matrix being represented
   def to_s
-    str = []
-    self.each { |val|
-      str << val
+    mat = Matrix.zero(row_size,column_size)
+    self.each_with_index { |index,val|
+      mat[index[0],index[1]] = val
     }
-    return str.to_s
+    return "Sparse" + mat.to_s
   end
 
   # add this matrix to another
@@ -417,104 +417,103 @@ class SparseMatrix
 
   # test the invariants
   def _invariants
-    return    # don't do anything yet
-    representedMatrix = sparseMatrix.toBaseMatrix
-
+    return
     # the sparse matrix internal representation should never have
     # more items than zeros in the matrix it represents
+    representedMatrix = self.toBaseMatrix
     nonzeros = 0
-    representedMatrix.each { |item|
+    representedMatrix.each { |item |
       if item != 0
         nonzeros += 1
       end
     }
-    assert_equal(sparseMatrix.internalRepItemCount, nonzeros,"invariant")
+    assert_equal(internalRepItemCount, nonzeros,'invariant')
 
     # there should never be any zero values in the internal matrix
     zeros = 0
-    sparseMatrix.each_with_index { |item, index| zeros += 1 if item == 0 }
-    assert_equal(zeros,0,"invariant")
+    each_with_index { |item, index| zeros += 1 if item == 0 }
+    assert_equal(zeros,0,'invariant')
 
     # make sure the sparse matrix is in the bounds of the original
     maxRow = nil
-    sparseMatrix.each_with_index { |index, item|
+    self.each_with_index { |index, item|
       unless maxRow.nil?
         maxRow = [maxRow, index[0]].max
       else
         maxRow = index[0]
       end
     }
-    assert(maxRow <= representedMatrix.row_size,"invariant")
+    assert(maxRow <= representedMatrix.row_size,'invariant')
 
     minRow = nil
-    sparseMatrix.each_with_index { |item, index|
+    each_with_index { |item, index|
       unless minRow.nil?
         minRow = [minRow, index[0]].min
       else
         minRow = index[0]
       end
     }
-    assert(minRow >= 0, "invariant")
+    assert(minRow >= 0,'invariant')
 
     maxCol = nil
-    sparseMatrix.each_with_index { |item, index|
+    each_with_index { |item, index|
       unless maxCol.nil?
         maxCol = [maxCol, index[1]].max
       else
         maxCol = index[1]
       end
     }
-    assert(maxCol <= representedMatrix.column_size, "invariant")
+    assert(maxCol <= representedMatrix.column_size,'invariant')
 
     minCol = nil
-    sparseMatrix.each_with_index { |item, index|
+    each_with_index { |item, index|
       unless minCol.nil?
         minCol = [minCol, index[1]].min
       else
         minCol = index[1]
       end
     }
-    assert(minCol >= 0, "invariant")
+    assert(minCol >= 0,'invariant')
 
     # Insure that our matrix starts at 0,0 (as opposed to 1,1, for example)
-    assert_equal(sparseMatrix[0,0],representedMatrix[0,0], "invariant")
+    assert_equal(self[0,0],representedMatrix[0,0],'invariant')
 
     # The transpose of a transpose is itself
-    assert_equal(sparseMatrix.transpose.transpose,sparseMatrix, "invariant")
+    assert_equal(transpose.transpose,self,'invariant')
 
     # a matrix plus a scalar, minus the same scalar is itself
-    assert_equal(sparseMatrix+5-5,sparseMatrix, "invariant")
+    assert_equal(self+5-5,self,'invariant')
 
     # a matrix added to a matrix, then subtracted by the same matrix is itself
     # (and vice versa)
-    diffMatrixOriginal = Matrix.build(sparseMatrix.row_size, sparse_matrix.column_size) { |row,col| @prng.rand(10) }
-    diffMatrix = SparseMatrixFactory.create(diffMatrixOriginal)
-    assert_equal(sparseMatrix.add(diffMatrix).subtract(diffMatrix),sparseMatrix, "invariant")
-    assert_equal(sparseMatrix.subtract(diffMatrix).add(diffMatrix),sparseMatrix, "invariant")
+    diffMatrixOriginal = Matrix.build(self.row_size, self.column_size) { |row,col| @prng.rand(10) }
+    diffMatrix = SparseMatrix.create(diffMatrixOriginal)
+    assert_equal(self + diffMatrix -diffMatrix ,self,'invariant')
+    assert_equal(self - diffMatrix + diffMatrix ,self,'invariant')
 
     # The inverse of the determinant is the same as the determinant of the inverse
-    assert_equal(sparseMatrix.inverse.determinant,sparseMatrix.determinant.inverse, "invariant")
+    #assert_equal(sparseMatrix.inverse.determinant,sparseMatrix.determinant.inverse)
 
     # if you switch two rows in a matrix back and forth, you will end with the same matrix
-    assert_equal(sparseMatrix.rowSwitch(2,3,0).rowSwitch(2,3,0),sparseMatrix, "invariant")
+    #assert_equal(sparseMatrix.rowSwitch(2,3,0).rowSwitch(2,3,0),sparseMatrix)
 
     # if you mirror the matrix twice (on either axis), it should be the same as the original
-    assert_equal(sparseMatrix.flip(0).flip(0),sparseMatrix, "invariant")
-    assert_equal(sparseMatrix.flip(1).flip(1),sparseMatrix, "invariant")
+    assert_equal(self.flipHorizontal.flipHorizontal,self,'invariant')
+    assert_equal(self.flipVertical.flipVertical,self,'invariant')
 
     # rotations that total to 360 degrees will be the same as the original matrix
-    assert_equals(sparseMatrix.rotate(0).rotate(0).rotate(0).rotate(0),sparseMatrix)
-    assert_equals(sparseMatrix.rotate(1).rotate(1),sparseMatrix)
-    assert_equals(sparseMatrix.rotate(2).rotate(0),sparseMatrix)
+    #assert_equal(sparseMatrix.rotate(0).rotate(0).rotate(0).rotate(0),sparseMatrix)
+    #assert_equal(sparseMatrix.rotate(1).rotate(1),sparseMatrix)
+    #assert_equal(sparseMatrix.rotate(2).rotate(0),sparseMatrix)
 
     # the inverse of the inverse of a matrix is itself
     # (this is only true for invertable matrices)
-    begin
-      assert_equal(sparseMatrix.inverse.inverse,sparseMatrix, "invariant")
-    rescue NotInvertibleError
-    else
-      assert(false, "invariant")
-    end
+    #begin
+    #  assert_equal(sparseMatrix.inverse.inverse,sparseMatrix)
+    #rescue NotInvertibleError
+    #else
+    #  #assert(false)
+    #end
 
   end
 

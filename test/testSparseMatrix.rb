@@ -56,13 +56,13 @@ class TestSparseMatrix < Test::Unit::TestCase
     assert(_inbounds(index,@sparseMatrix))
     assert(val.is_a? Numeric)
     assert_not_equal(@sparseMatrix[index],0)
-    #_invariants(@sparseMatrix,@originalMatrix)
+    _invariants(@sparseMatrix,@originalMatrix)
 
     # run the command
     @sparseMatrix.put(index,val)
 
     # post-conditions and invariants
-    #_invariants(@sparseMatrix,@originalMatrix)
+    _invariants(@sparseMatrix,@originalMatrix)
     assert_equal( @sparseMatrix[index], val )
     assert(@sparseMatrix.include?(val))
     assert_equal(@sparseMatrix.internalRepItemCount,@oldSparseMatrix.internalRepItemCount)
@@ -72,55 +72,29 @@ class TestSparseMatrix < Test::Unit::TestCase
 
   # test the submatrix function
   def test_sub_matrix
-=begin
-    rows = 10
-    cols = 10
 
-    a = Matrix.build(rows,cols) {|x,y|
-      if (x+y % 3 == 0)
-        0
-      else
-        y
-      end
-    }
-    a = SparseMatrix.create(a)
-    b = a.subMatrix([],[6])
-    puts ''
-    (0..rows).each { |i|
-      (0..cols).each{ |j|
-        print a[i,j]
-        print ' '
-      }
-      puts ''
-    }
-    puts '\n'
-    (0..rows).each { |i|
-      (0..cols-1).each{ |j|
-        print b[i,j]
-        print ' '
-      }
-      puts ''
-    }
+    testMat = Matrix.build(5,5) {|x,y| y}
+    testSp = SparseMatrix.create(testMat)
+    testSp.subMatrix([1],[1,3])
 
-=end
     # indices to remove
     nonZeroIndices = []
     @sparseMatrix.each_with_index { |index, val| if val != 0
                                                    nonZeroIndices.push(index)
                                                  end }
     rows = [nonZeroIndices[0][0], nonZeroIndices[1000][0], nonZeroIndices[200][0]]
-    cols = []#[nonZeroIndices[0][1], nonZeroIndices[1][1], nonZeroIndices[2][1]]
+    cols = [nonZeroIndices[0][1], nonZeroIndices[1][1], nonZeroIndices[2][1]]
     ret = @sparseMatrix.subMatrix(rows,cols)
 
-    #assert_equal(ret.row_size,@sparseMatrix.row_size-3)
-    #assert_equal(ret.column_size,@sparseMatrix.column_size-3)
+    assert_equal(ret.row_size,@sparseMatrix.row_size-3)
+    assert_equal(ret.column_size,@sparseMatrix.column_size-3)
 
     starti = 0
     (0..@sparseMatrix.row_size-1).each { |i|
       startj = 0
       unless i == rows[0] or i == rows[1] or i == rows[2]
         (0..@sparseMatrix.column_size-1).each { |j|
-          unless false#j == cols[0] or j == cols[1] or j == cols[2]
+          unless j == cols[0] or j == cols[1] or j == cols[2]
             assert_equal(@sparseMatrix[i,j],ret[starti,startj])
             startj += 1
           end
@@ -151,16 +125,17 @@ class TestSparseMatrix < Test::Unit::TestCase
     assert(_inbounds(index,@sparseMatrix))
     assert(val.is_a? Numeric)
     assert_equal(@sparseMatrix[index],0)
-    #_invariants(@sparseMatrix,@originalMatrix)
+    _invariants(@sparseMatrix,@originalMatrix)
 
     # run the command
     @sparseMatrix.put(index,val)
 
     # post-conditions and invariants
-    #_invariants(@sparseMatrix,@originalMatrix)
+
     assert_equal( @sparseMatrix[index], val )
     assert(@sparseMatrix.include?(val))
     assert_equal(@sparseMatrix.internalRepItemCount,@oldSparseMatrix.internalRepItemCount+1)
+    _invariants(@sparseMatrix,@sparseMatrix.toBaseMatrix)
 
   end
 
@@ -168,13 +143,13 @@ class TestSparseMatrix < Test::Unit::TestCase
   def test_transpose
 
     # pre-conditions and invariants
-    #_invariants(@sparsematrix,@originalMatrix)
+    _invariants(@sparseMatrix,@originalMatrix)
 
     # do the operation
     transposedMatrix = @sparseMatrix.transpose
 
     #post-conditions and invariants
-    #_invariants(@sparsematrix,@originalMatrix)
+    _invariants(@sparseMatrix,@originalMatrix)
     assert_equal(@sparseMatrix.row_size,transposedMatrix.column_size)
     assert_equal(@sparseMatrix.column_size,transposedMatrix.row_size)
 
@@ -203,13 +178,13 @@ class TestSparseMatrix < Test::Unit::TestCase
     assert(addMatrix.is_a? SparseMatrix)
     assert_equal(addMatrix.row_size,@sparseMatrix.row_size)
     assert_equal(addMatrix.column_size,@sparseMatrix.column_size)
-    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    _invariants(@sparseMatrix,@oldSparseMatrix)
 
     # do the operation
     result = @sparseMatrix + addMatrix
 
     # post-conditions and invariants
-    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    _invariants(@sparseMatrix,@oldSparseMatrix)
     assert_equal(result.row_size,@sparseMatrix.row_size)
     assert_equal(result.column_size,@sparseMatrix.column_size)
     assert_equal(result.toBaseMatrix,baseMatrix+@originalMatrix)
@@ -234,13 +209,13 @@ class TestSparseMatrix < Test::Unit::TestCase
     assert(subMatrix.is_a? SparseMatrix)
     assert_equal(subMatrix.row_size,@sparseMatrix.row_size)
     assert_equal(subMatrix.column_size,@sparseMatrix.column_size)
-    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    _invariants(@sparseMatrix,@oldSparseMatrix)
 
     # do the operation
     result = @sparseMatrix - subMatrix
 
     # post-conditions and invariants
-    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    _invariants(@sparseMatrix,@oldSparseMatrix)
     assert_equal(result.row_size,@sparseMatrix.row_size)
     assert_equal(result.column_size,@sparseMatrix.column_size)
     assert_equal(result.toBaseMatrix,@originalMatrix-baseMatrix)
@@ -254,13 +229,13 @@ class TestSparseMatrix < Test::Unit::TestCase
 
     # pre-condition and invariants
     assert(val.is_a? Numeric)
-    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    _invariants(@sparseMatrix,@oldSparseMatrix)
 
     # do the operation
     result = @sparseMatrix + val
 
     # post-conditions and invariants
-    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    _invariants(@sparseMatrix,@oldSparseMatrix)
     assert_equal(result.row_size,@sparseMatrix.row_size)
     assert_equal(result.column_size,@sparseMatrix.column_size)
     assert_equal(result.toBaseMatrix,Matrix.build(@originalMatrix.row_size,@originalMatrix.column_size){|x,y| @originalMatrix[x,y]+val})
@@ -276,13 +251,13 @@ class TestSparseMatrix < Test::Unit::TestCase
 
     # pre-condition and invariants
     assert(val.is_a? Numeric)
-    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    _invariants(@sparseMatrix,@oldSparseMatrix)
 
     # do the operation
     result = @sparseMatrix - val
 
     # post-conditions and invariants
-    #_invariants(@sparseMatrix,@oldSparseMatrix)
+    _invariants(@sparseMatrix,@oldSparseMatrix)
     assert_equal(result.row_size,@sparseMatrix.row_size)
     assert_equal(result.column_size,@sparseMatrix.column_size)
     assert_equal(result.toBaseMatrix,Matrix.build(@originalMatrix.row_size,@originalMatrix.column_size){|x,y| @originalMatrix[x,y]-val})
@@ -465,34 +440,34 @@ class TestSparseMatrix < Test::Unit::TestCase
 
     # a matrix added to a matrix, then subtracted by the same matrix is itself
     # (and vice versa)
-    diffMatrixOriginal = Matrix.build(sparseMatrix.row_size, sparse_matrix.column_size) { |row,col| @prng.rand(10) }
-    diffMatrix = SparseMatrixFactory.create(diffMatrixOriginal)
-    assert_equal(sparseMatrix.add(diffMatrix).subtract(diffMatrix),sparseMatrix)
-    assert_equal(sparseMatrix.subtract(diffMatrix).add(diffMatrix),sparseMatrix)
+    diffMatrixOriginal = Matrix.build(sparseMatrix.row_size, sparseMatrix.column_size) { |row,col| @prng.rand(10) }
+    diffMatrix = SparseMatrix.create(diffMatrixOriginal)
+    assert_equal(sparseMatrix + diffMatrix -diffMatrix ,sparseMatrix)
+    assert_equal(sparseMatrix - diffMatrix + diffMatrix ,sparseMatrix)
 
     # The inverse of the determinant is the same as the determinant of the inverse
-    assert_equal(sparseMatrix.inverse.determinant,sparseMatrix.determinant.inverse)
+    #assert_equal(sparseMatrix.inverse.determinant,sparseMatrix.determinant.inverse)
 
     # if you switch two rows in a matrix back and forth, you will end with the same matrix
-    assert_equal(sparseMatrix.rowSwitch(2,3,0).rowSwitch(2,3,0),sparseMatrix)
+    #assert_equal(sparseMatrix.rowSwitch(2,3,0).rowSwitch(2,3,0),sparseMatrix)
 
     # if you mirror the matrix twice (on either axis), it should be the same as the original
-    assert_equal(sparseMatrix.flip(0).flip(0),sparseMatrix)
-    assert_equal(sparseMatrix.flip(1).flip(1),sparseMatrix)
+    assert_equal(sparseMatrix.flipHorizontal.flipHorizontal,sparseMatrix)
+    assert_equal(sparseMatrix.flipVertical.flipVertical,sparseMatrix)
 
     # rotations that total to 360 degrees will be the same as the original matrix
-    assert_equals(sparseMatrix.rotate(0).rotate(0).rotate(0).rotate(0),sparseMatrix)
-    assert_equals(sparseMatrix.rotate(1).rotate(1),sparseMatrix)
-    assert_equals(sparseMatrix.rotate(2).rotate(0),sparseMatrix)
+    #assert_equal(sparseMatrix.rotate(0).rotate(0).rotate(0).rotate(0),sparseMatrix)
+    #assert_equal(sparseMatrix.rotate(1).rotate(1),sparseMatrix)
+    #assert_equal(sparseMatrix.rotate(2).rotate(0),sparseMatrix)
 
     # the inverse of the inverse of a matrix is itself
     # (this is only true for invertable matrices)
-    begin
-      assert_equal(sparseMatrix.inverse.inverse,sparseMatrix)
-    rescue NotInvertibleError
-    else
-      assert(false)
-    end
+    #begin
+    #  assert_equal(sparseMatrix.inverse.inverse,sparseMatrix)
+    #rescue NotInvertibleError
+    #else
+    #  #assert(false)
+    #end
 
   end
 
