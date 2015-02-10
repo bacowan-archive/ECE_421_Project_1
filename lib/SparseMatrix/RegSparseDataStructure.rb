@@ -207,6 +207,44 @@ class RegSparseDataStructure < AbstractDataStructure
 
   end
 
+  # Create a submatrix of this, removing rows and cols
+  def subMatrix(rows,cols)
+    rowsdup = rows.uniq
+    colsdup = cols.uniq
+    # make sure we are going largest to smallest
+    rowsdup = rowsdup.sort {|x,y| y <=> x}
+    colsdup = colsdup.sort {|x,y| y <=> x}
+
+
+
+    rowsdup.each { |r|
+      @map.delete(r)
+      # move all larger indices down
+      (r..@rows-1).each {|i|
+        @map[i] = @map[i+1]
+      }
+    }
+    colsdup.each{ |c|
+      @map.each { |key,val|
+        unless val.nil?
+          val.delete(c)
+          # move all larger indices down
+          (c..@columns-1).each {|i|
+            unless val[i+1] == 0
+              val[i] = val[i+1]
+            else
+              val.delete(i)
+            end
+          }
+        end
+      }
+    }
+
+    # readjust the lengths
+    @rows -= rowsdup.length
+    @columns -= colsdup.length
+  end
+
   # flip this matrix horizontally
   def flipVertical
 

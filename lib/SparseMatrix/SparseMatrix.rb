@@ -134,8 +134,8 @@ class SparseMatrix
   # go through all elements in the array, including zeros.
   # go row by row, then column by column
   def each(&block)
-    (0..@delegate.getRowSize).each { |row|
-      (0..@delegate.getColSize).each { |col|
+    (0..@delegate.getRowSize-1).each { |row|
+      (0..@delegate.getColSize-1).each { |col|
         yield(self[row,col])
       }
     }
@@ -169,6 +169,14 @@ class SparseMatrix
   # get the column size
   def column_size
     @delegate.getColSize
+  end
+
+  # Create a submatrix of this, removing rows and cols
+  def subMatrix(rows,cols)
+    newDelegate = @delegate.clone
+    newDelegate.subMatrix(rows,cols)
+    newMatrix = SparseMatrix.new(newDelegate)
+    return newMatrix
   end
 
   # test if a value exists in the matrix

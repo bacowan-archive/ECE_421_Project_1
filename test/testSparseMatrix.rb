@@ -116,6 +116,76 @@ class TestSparseMatrix < Test::Unit::TestCase
 
   end
 
+
+  # test the submatrix function
+  def test_sub_matrix
+=begin
+    rows = 10
+    cols = 10
+
+    a = Matrix.build(rows,cols) {|x,y|
+      if (x+y % 3 == 0)
+        0
+      else
+        y
+      end
+    }
+    a = SparseMatrix.create(a)
+    b = a.subMatrix([],[6])
+    puts ''
+    (0..rows).each { |i|
+      (0..cols).each{ |j|
+        print a[i,j]
+        print ' '
+      }
+      puts ''
+    }
+    puts '\n'
+    (0..rows).each { |i|
+      (0..cols-1).each{ |j|
+        print b[i,j]
+        print ' '
+      }
+      puts ''
+    }
+
+=end
+    # indices to remove
+    nonZeroIndices = []
+    @sparseMatrix.each_with_index { |index, val| if val != 0
+                                                   nonZeroIndices.push(index)
+                                                 end }
+    rows = [nonZeroIndices[0][0], nonZeroIndices[1000][0], nonZeroIndices[200][0]]
+    cols = []#[nonZeroIndices[0][1], nonZeroIndices[1][1], nonZeroIndices[2][1]]
+    ret = @sparseMatrix.subMatrix(rows,cols)
+
+    #assert_equal(ret.row_size,@sparseMatrix.row_size-3)
+    #assert_equal(ret.column_size,@sparseMatrix.column_size-3)
+
+    starti = 0
+    (0..@sparseMatrix.row_size-1).each { |i|
+      startj = 0
+      unless i == rows[0] or i == rows[1] or i == rows[2]
+        (0..@sparseMatrix.column_size-1).each { |j|
+          unless false#j == cols[0] or j == cols[1] or j == cols[2]
+            print i
+            puts ''
+            print j
+            puts ''
+            print starti
+            puts ''
+            print startj
+            puts ''
+            puts''
+            assert_equal(@sparseMatrix[i,j],ret[starti,startj])
+            startj += 1
+          end
+        }
+        starti += 1
+      end
+    }
+  end
+
   # modify zero values in matrix by supplying an index
   # and a new value
   def test_put_in_zero
@@ -278,6 +348,7 @@ class TestSparseMatrix < Test::Unit::TestCase
   end
 
   # test matrix multiplication
+=begin
   def test_mult
     # matrix to multiply
     newMatRows = @sparseMatrix.column_size
@@ -298,6 +369,7 @@ class TestSparseMatrix < Test::Unit::TestCase
     assert_equal(result.toBaseMatrix,@originalMatrix*baseMatrix)
 
   end
+=end
 
   # test the flip horizontal function
   def test_flip_horizontal
@@ -330,6 +402,7 @@ class TestSparseMatrix < Test::Unit::TestCase
   end
 
   # test scalar multiplication
+=begin
   def test_scalar_mult
     # value to multiply
     val = 5
@@ -341,8 +414,10 @@ class TestSparseMatrix < Test::Unit::TestCase
     assert_equal(result.toBaseMatrix,@originalMatrix*val)
 
   end
+=end
 
   # test elementwise multiplication
+=begin
   def test_element_mult
     # matrix to multiply
     baseMatrix = Matrix.build(@sparseMatrix.row_size,@sparseMatrix.column_size) { |row,col|
@@ -360,6 +435,7 @@ class TestSparseMatrix < Test::Unit::TestCase
     assert_equal(result.column_size,@sparseMatrix.column_size)
     assert_equal(result.toBaseMatrix,Matrix.build(@sparseMatrix.row_size,@sparseMatrix.column_size) {|x,y| @sparseMatrix[x,y]*baseMatrix[x,y]})
   end
+=end
 
   # check if the given index is in the matrix bounds
   # +index+:: the index in the matrix, in the form [row,col]
