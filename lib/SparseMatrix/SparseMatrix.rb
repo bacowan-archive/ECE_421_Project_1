@@ -444,7 +444,7 @@ class SparseMatrix
   def to_s
     mat = Matrix.zero(row_size,column_size).to_a
     self.each_with_index { |index,val|
-      mat[index[0],index[1]] = val
+      mat[index[0]][index[1]] = val
     }
     return "Sparse" + mat.to_s
   end
